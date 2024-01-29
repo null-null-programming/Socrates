@@ -1,0 +1,45 @@
+
+classDiagram
+    class Main {
+        +FastAPI app
+        +setup() void
+    }
+    class User {
+        +int id
+        +string username
+        +string email
+        +string password_hash
+        +create_user(username: str, email: str, password: str) User
+        +authenticate_user(username: str, password: str) bool
+    }
+    class Debate {
+        +int id
+        +string topic
+        +list participants
+        +dict contributions
+        +add_participant(user: User) void
+        +remove_participant(user: User) void
+        +add_contribution(user: User, content: str) void
+    }
+    class RealTime {
+        +subscribe(debate: Debate) void
+        +unsubscribe(debate: Debate) void
+        +broadcast_update(debate: Debate, message: str) void
+    }
+    class AIScoring {
+        +evaluate_contribution(contribution: str) float
+    }
+    class Rankings {
+        +dict user_scores
+        +update_rankings(user: User, score: float) void
+        +get_rankings() dict
+    }
+    Main --> User
+    Main --> Debate
+    Main --> RealTime
+    Main --> AIScoring
+    Main --> Rankings
+    Debate --> User
+    RealTime --> Debate
+    AIScoring --> Debate
+    Rankings --> User
