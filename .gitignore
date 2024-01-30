@@ -5,3 +5,6 @@ __pycache__
 docs
 resources
 test_outputs
+node_modules
+.next
+settings.py

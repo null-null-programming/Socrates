@@ -1,7 +1,7 @@
 ## main.py
 from fastapi import FastAPI, Depends, HTTPException, WebSocket
 from sqlalchemy.orm import Session
-from auth import router as auth_router, get_current_user
+from auth import auth_router, get_current_user
 from debate import Debate as DebateModel
 from user import User, UserCreate, UserInDB
 from realtime import RealTime

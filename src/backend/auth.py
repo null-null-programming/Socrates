@@ -13,7 +13,7 @@ from config import (
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-router = APIRouter()
+auth_router = APIRouter()
 
 
 class Token(BaseModel):
@@ -49,7 +49,7 @@ def get_current_user(
         raise credentials_exception
 
 
-@router.post("/token", response_model=Token)
+@auth_router.post("/token", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):

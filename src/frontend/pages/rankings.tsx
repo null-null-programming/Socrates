@@ -1,5 +1,5 @@
-## frontend/pages/rankings.tsx
-import React, { useState, useEffect } from 'react';
+//frontend/pages/rankings.tsx
+import React, { useEffect, useState } from 'react';
 import NavigationBar from '../components/NavigationBar';
 
 interface RankingEntry {

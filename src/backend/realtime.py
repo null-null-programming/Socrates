@@ -2,6 +2,7 @@
 from typing import Dict, List
 from fastapi import WebSocket, WebSocketDisconnect
 
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[int, List[WebSocket]] = {}
@@ -13,7 +14,10 @@ class ConnectionManager:
         self.active_connections[debate_id].append(websocket)
 
     async def disconnect(self, websocket: WebSocket, debate_id: int):
-        if debate_id in self.active_connections and websocket in self.active_connections[debate_id]:
+        if (
+            debate_id in self.active_connections
+            and websocket in self.active_connections[debate_id]
+        ):
             self.active_connections[debate_id].remove(websocket)
             if not self.active_connections[debate_id]:
                 del self.active_connections[debate_id]
@@ -29,13 +33,18 @@ class ConnectionManager:
                 except WebSocketDisconnect:
                     await self.disconnect(connection, debate_id)
 
+
 class RealTime:
     def __init__(self):
         self.manager = ConnectionManager()
 
-    async def subscribe(self, websocket: WebSocket, debate_id: int, topic: str) -> None:
+    async def subscribe(
+        self, websocket: WebSocket, debate_id: int, topic: str = "some topic"
+    ) -> None:
         await self.manager.connect(websocket, debate_id)
-        await self.manager.send_personal_message(f"You are now connected to debate {topic}.", websocket)
+        await self.manager.send_personal_message(
+            f"You are now connected to debate {topic}.", websocket
+        )
 
     async def unsubscribe(self, websocket: WebSocket, debate_id: int) -> None:
         await self.manager.disconnect(websocket, debate_id)
