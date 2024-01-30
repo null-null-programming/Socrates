@@ -1,2 +1,7 @@
 __pycache__
 *.pyc
+.vscode/*
+.dependencies.json
+docs
+resources
+test_outputs
