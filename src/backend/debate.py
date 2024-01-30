@@ -1,31 +1,37 @@
 from typing import List, Dict
 from pydantic import BaseModel
 from fastapi import HTTPException, status
-from .user import UserInDB
-from .realtime import RealTime  # Assuming RealTime class is defined in realtime.py
-from .ai_scoring import AIScoring  # Assuming AIScoring class is defined in ai_scoring.py
+from user import UserInDB
+from realtime import RealTime
+from ai_scoring import AIScoring
+
 
 class Participant(BaseModel):
     id: int
     username: str
 
+
 class Contribution(BaseModel):
     user_id: int
     content: str
+
 
 class Debate(BaseModel):
     id: int
     topic: str
     participants: List[Participant] = []
     contributions: Dict[int, List[Contribution]] = {}
-    real_time: RealTime = None  # Placeholder for RealTime instance
-    ai_scoring: AIScoring = None  # Placeholder for AIScoring instance
+    real_time: RealTime | None = None
+    ai_scoring: AIScoring | None = None
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def add_participant(self, user: UserInDB) -> None:
         if any(participant.id == user.id for participant in self.participants):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User already participating in the debate."
+                detail="User already participating in the debate.",
             )
         self.participants.append(Participant(id=user.id, username=user.username))
 
@@ -33,20 +39,24 @@ class Debate(BaseModel):
         if user.id not in [participant.id for participant in self.participants]:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not participating in the debate."
+                detail="User not participating in the debate.",
             )
-        self.participants = [participant for participant in self.participants if participant.id != user.id]
+        self.participants = [
+            participant
+            for participant in self.participants
+            if participant.id != user.id
+        ]
 
     def add_contribution(self, user: UserInDB, content: str) -> None:
         if not content.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Contribution content cannot be empty."
+                detail="Contribution content cannot be empty.",
             )
         if user.id not in [participant.id for participant in self.participants]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="User is not a participant of the debate."
+                detail="User is not a participant of the debate.",
             )
         contribution = Contribution(user_id=user.id, content=content)
         if user.id not in self.contributions:
@@ -60,7 +70,7 @@ class Debate(BaseModel):
         else:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Real-time service is currently unavailable."
+                detail="Real-time service is currently unavailable.",
             )
 
     def evaluate_contribution_with_ai(self, contribution: Contribution) -> float:
@@ -69,7 +79,7 @@ class Debate(BaseModel):
         else:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="AI scoring service is currently unavailable."
+                detail="AI scoring service is currently unavailable.",
             )
 
     def get_all_contributions(self) -> Dict[int, List[Contribution]]:

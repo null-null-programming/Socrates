@@ -1,7 +1,8 @@
 ## rankings.py
 from typing import Dict
 from pydantic import BaseModel
-from .user import UserInDB  # Import UserInDB class from user module
+from user import UserInDB  # Import UserInDB class from user module
+
 
 class Rankings(BaseModel):
     user_scores: Dict[int, float] = {}
@@ -27,4 +28,6 @@ class Rankings(BaseModel):
         Returns a dictionary with user IDs as keys and scores as values,
         sorted by score in descending order.
         """
-        return dict(sorted(self.user_scores.items(), key=lambda item: item[1], reverse=True))
+        return dict(
+            sorted(self.user_scores.items(), key=lambda item: item[1], reverse=True)
+        )
