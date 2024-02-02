@@ -24,6 +24,8 @@
   - **LLM**
     - gpt-3.5-turbo-16k
 
+![diagram](./diagram.PNG)
+
 ## 考え中リスト
 
 - **LLM モデルの選定**
