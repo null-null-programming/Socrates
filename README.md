@@ -28,6 +28,15 @@
 
 ![diagram](./picture/diagram.PNG)
 
+## 起動方法
+
+- Frontend
+
+  - $ npm run dev
+
+- Backend
+  - $ uvicorn api:app --reload
+
 ## 考え中リスト
 
 - **LLM モデルの選定**
