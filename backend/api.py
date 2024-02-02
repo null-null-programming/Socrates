@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from time import sleep
 
 app = FastAPI()
 
@@ -23,5 +24,6 @@ class Message(BaseModel):
 
 @app.post("/chat")
 async def chat(message: Message):
-    reply = f"Recieved Message: {message.message}"
+    reply = f"{message.message}"
+    sleep(3)
     return {"reply": reply}
