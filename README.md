@@ -1,6 +1,6 @@
 # Socrates
 
-![logo](./logo.png)
+![logo](./picture/logo.png)
 
 - Socrates は、LLM（大規模言語モデル）を活用した、一対一のディベートバトルアプリです。
 - ユーザーはランダムまたは選択されたトピックに基づいて議論を行い、AI がその議論を評価して、より優れた意見を持っていた方をスコア判定します。
@@ -24,7 +24,7 @@
   - **LLM**
     - gpt-3.5-turbo-16k
 
-![diagram](./diagram.PNG)
+![diagram](./picture/diagram.PNG)
 
 ## 考え中リスト
 
