@@ -69,7 +69,7 @@ const Chat = () => {
           <div className="w-full mb-4">
             <textarea
               className="border bg-[#191825] border-[#F0E3E3] p-4 text-white w-full"
-              rows={10} // テキストエリアの行数を増やして縦の大きさを調整
+              rows={10}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Enter your thoughts..."
