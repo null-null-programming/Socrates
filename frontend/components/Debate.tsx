@@ -1,6 +1,6 @@
 //debate.tsx
 import { useEffect, useRef, useState } from "react";
-import { fetchCurrentSessionState } from "../lib/fetchCurrentSessionState";
+import { fetchCurrentSessionState } from "../tools/fetchCurrentSessionState";
 
 interface ChatItem {
   id: string;

@@ -1,7 +1,7 @@
 // pages/debate/[session_id].tsx
 import { GetServerSideProps } from "next";
 import Debate from "../../components/Debate";
-import { fetchCurrentSessionState } from "../../lib/fetchCurrentSessionState";
+import { fetchCurrentSessionState } from "../../tools/fetchCurrentSessionState";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session_id = context.params?.session_id;
