@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4
 from typing import Dict, List
+from lib import oauth20
 
 app = FastAPI()
 
@@ -16,6 +17,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(oauth20.router)
 
 # セッションの状態とメッセージの履歴を格納
 sessions: Dict[str, Dict[str, any]] = {}
