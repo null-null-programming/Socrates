@@ -60,7 +60,8 @@ Socrates アプリは、ユーザーからのフィードバックを歓迎し�
 
 ## 使用技術
 
-- Web App
+- **Web App**
+
   - **Backend**
     - FastAPI
   - **Frontend**
@@ -69,6 +70,11 @@ Socrates アプリは、ユーザーからのフィードバックを歓迎し�
     - TailwindCSS
   - **LLM**
     - gpt-3.5-turbo-16k
+
+- **Infrastructure**
+  - **Google Cloud Run**
+  - **Firestore**
+  - **Firebase Storage**
 
 ![architecture](./picture/architecture.png)
 
