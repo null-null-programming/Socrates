@@ -1,7 +1,7 @@
-import Link from "next/link";
 import Navbar from "../components/Navbar";
+import StartDebateButton from "../components/StartDebateButton";
 
-const Home = () => {
+const IndexPage = () => {
   return (
     <div className="bg-[#191825]">
       <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-[#F0E3E3]">
@@ -28,15 +28,11 @@ const Home = () => {
         </div>
 
         <div className="text-center">
-          <Link href="/chat">
-            <h1 className="inline-block border boerder-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded hover:bg-[#FF6969] hover:border-[#FF6969] transition-colors hover:text-[#F0E3E3]">
-              Start Debate
-            </h1>
-          </Link>
+          <StartDebateButton />
         </div>
       </div>
     </div>
   );
 };
 
-export default Home;
+export default IndexPage;

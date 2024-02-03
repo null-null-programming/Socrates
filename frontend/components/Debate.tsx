@@ -1,11 +1,16 @@
+//debate.tsx
 import { useEffect, useRef, useState } from "react";
+import { fetchCurrentSessionState } from "../lib/fetchCurrentSessionState";
 
-const Chat = () => {
+interface DebateProps {
+  sessionId: string;
+}
+
+const Debate = ({ session_id }: DebateProps) => {
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const endOfMessagesRef = useRef(null);
 
-  // チャット履歴が更新されるたびにスクロールする
   useEffect(() => {
     if (endOfMessagesRef.current) {
       endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
@@ -13,31 +18,35 @@ const Chat = () => {
   }, [chatHistory]);
 
   const sendMessage = async () => {
+    // 現在のセッション状態をチェック
+    const sessionState = await fetchCurrentSessionState(session_id);
+    if (sessionState.current_turn !== "A") {
+      console.log(sessionState.current_turn);
+      alert("今はあなたのターンではありません。もう少しお待ちください。");
+      return;
+    }
+
+    // メッセージ送信の処理
     const newMessage = {
-      id: chatHistory.length,
       text: message,
-      sender: "Me",
+      sender: "A",
     };
-    // メッセージをチャット履歴に追加
     setChatHistory((prevHistory) => [...prevHistory, newMessage]);
 
-    // APIリクエストを送信し、レスポンスを待つ
-    const res = await fetch("http://localhost:8000/chat", {
+    const res = await fetch(`http://localhost:8000/debate/${session_id}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify(newMessage),
     });
-    const data = await res.json();
 
-    // レスポンスをチャット履歴に追加
+    const data = await res.json();
+    console.log(data);
+
     const newResponse = {
-      id: chatHistory.length + 1,
       text: data.reply,
-      sender: "Opponent",
     };
 
     setChatHistory((prevHistory) => [...prevHistory, newResponse]);
-    // メッセージ入力フィールドをクリア
     setMessage("");
   };
 
@@ -47,11 +56,10 @@ const Chat = () => {
         <div className="flex flex-col items-center justify-center min-h-screen">
           <div className="w-full mb-4 overflow-auto">
             {chatHistory.map((chatItem) => (
-              <div className="py-3">
+              <div className="py-3" key={chatItem.id}>
                 <div
-                  key={chatItem.id}
                   className={`flex border p-2 mb-2 w-full text-white ${
-                    chatItem.sender === "Me"
+                    chatItem.sender === "A"
                       ? "border-[#F0E3E3]"
                       : "border-[#2F576E]"
                   }`}
@@ -74,7 +82,6 @@ const Chat = () => {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Enter your thoughts..."
             ></textarea>
-
             <div className="flex justify-end w-full mb-4">
               <button
                 className="mt-4 px-6 py-3 border border-[#FF6969] text-white font-bold rounded-lg shadow-lg hover:bg-[#FF6969] transition duration-300 ease-in-out"
@@ -90,4 +97,4 @@ const Chat = () => {
   );
 };
 
-export default Chat;
+export default Debate;
