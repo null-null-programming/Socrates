@@ -26,7 +26,6 @@ const DebatePage = ({ sessionState, sessionId, error }) => {
 
   return (
     <div>
-      <h1>Debate Session: {sessionId}</h1>
       <Debate sessionId={sessionId} sessionState={sessionState} />
     </div>
   );

@@ -2,21 +2,30 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchCurrentSessionState } from "../lib/fetchCurrentSessionState";
 
-interface DebateProps {
-  sessionId: string;
+interface ChatItem {
+  id: string;
+  text: string;
+  sender: string;
 }
 
-const Debate = ({ sessionId }: DebateProps) => {
-  // 正しいpropsの受け取り方
+interface DebateProps {
+  sessionId: string;
+  sessionState: {
+    current_turn: string;
+    round: number;
+    messages: ChatItem[];
+  };
+}
+
+const Debate = ({ sessionId, sessionState }: DebateProps) => {
   const [message, setMessage] = useState<string>("");
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatItem[]>(
+    sessionState.messages || []
+  );
   const endOfMessagesRef = useRef<HTMLDivElement | null>(null);
 
-  // chatHistoryが更新されたときに実行する
   useEffect(() => {
-    if (endOfMessagesRef.current) {
-      endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
   // 送信ボタンを押した時の処理
@@ -28,10 +37,9 @@ const Debate = ({ sessionId }: DebateProps) => {
       return;
     }
 
-    // メッセージ送信の処理
     const newMessage = {
       text: message,
-      sender: "A", // ここは動的に変えられるようにする必要があるかも
+      sender: "A",
     };
     setChatHistory([...chatHistory, newMessage]);
 
