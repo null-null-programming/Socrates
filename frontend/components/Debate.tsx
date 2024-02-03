@@ -6,22 +6,24 @@ interface DebateProps {
   sessionId: string;
 }
 
-const Debate = ({ session_id }: DebateProps) => {
-  const [message, setMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
-  const endOfMessagesRef = useRef(null);
+const Debate = ({ sessionId }: DebateProps) => {
+  // 正しいpropsの受け取り方
+  const [message, setMessage] = useState<string>("");
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const endOfMessagesRef = useRef<HTMLDivElement | null>(null);
 
+  // chatHistoryが更新されたときに実行する
   useEffect(() => {
     if (endOfMessagesRef.current) {
       endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatHistory]);
 
+  // 送信ボタンを押した時の処理
   const sendMessage = async () => {
-    // 現在のセッション状態をチェック
-    const sessionState = await fetchCurrentSessionState(session_id);
+    // 現在のセッション状態を取得
+    const sessionState = await fetchCurrentSessionState(sessionId);
     if (sessionState.current_turn !== "A") {
-      console.log(sessionState.current_turn);
       alert("今はあなたのターンではありません。もう少しお待ちください。");
       return;
     }
@@ -29,25 +31,27 @@ const Debate = ({ session_id }: DebateProps) => {
     // メッセージ送信の処理
     const newMessage = {
       text: message,
-      sender: "A",
+      sender: "A", // ここは動的に変えられるようにする必要があるかも
     };
-    setChatHistory((prevHistory) => [...prevHistory, newMessage]);
+    setChatHistory([...chatHistory, newMessage]);
 
-    const res = await fetch(`http://localhost:8000/debate/${session_id}/chat`, {
+    // メッセージをサーバー側に送信
+    const res = await fetch(`http://localhost:8000/debate/${sessionId}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newMessage),
     });
 
+    if (!res.ok) {
+      const error = await res.json();
+      alert(error.detail);
+      return;
+    }
+
     const data = await res.json();
-    console.log(data);
-
-    const newResponse = {
-      text: data.reply,
-    };
-
-    setChatHistory((prevHistory) => [...prevHistory, newResponse]);
-    setMessage("");
+    const newResponse = { text: data.reply };
+    setChatHistory([...chatHistory, newResponse]);
+    setMessage(""); // メッセージ入力フィールドをクリア
   };
 
   return (
