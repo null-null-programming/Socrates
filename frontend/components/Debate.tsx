@@ -63,7 +63,7 @@ const Debate = ({ sessionId, sessionState }: DebateProps) => {
   };
 
   return (
-    <div className="bg-[#191825]">
+    <div>
       <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-white">
         <div className="flex flex-col items-center justify-center min-h-screen">
           <div className="w-full mb-4 overflow-auto">

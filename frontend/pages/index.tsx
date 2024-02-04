@@ -3,9 +3,10 @@ import StartDebateButton from "../components/StartDebateButton";
 
 const IndexPage = () => {
   return (
-    <div className="bg-[#191825]">
-      <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-[#F0E3E3]">
+    <div>
+      <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-outline">
         <Navbar />
+        <div className="image-background"></div>
         <img
           src="../static/logo.png"
           alt="Socrates Logo"

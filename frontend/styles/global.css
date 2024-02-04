@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes slide {
+  from {
+    background-position: 0px 0;
+  }
+  to {
+    background-position: 1000000px 0;
+  }
+}
+
 @keyframes fadeIn {
     from {
       opacity: 0;
@@ -10,3 +19,46 @@
       opacity: 1;
     }
   }
+
+  .page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/static/background_dark.png');
+    background-size: cover;
+    overflow: hidden;
+    animation: slide 20000s linear infinite;
+    z-index: -2; /* 背景を最背面に */
+  }
+
+  .text-outline {
+    color: white;
+    text-shadow:
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000;
+  }
+
+  @keyframes slideToLeft {
+    from {
+      right: 150%; /* 右端から開始 */
+    }
+    to {
+      right: -150%; /* 左端まで移動 */
+    }
+  }
+
+  .image-background {
+    width: 300px;
+    height: 300px;
+    background-image: url('/static/warai.jpg'); /* Next.jsプロジェクトではpublicフォルダからのパス */
+    background-size:cover; /* 画像が要素を完全に覆うように設定 */
+    background-repeat: no-repeat; /* 画像を繰り返さない */
+    animation: slideToLeft 17s linear infinite; /* アニメーション適用 */
+    position: fixed; /* アニメーションの基準点 */
+    z-index:-1;
+  }
+  
