@@ -1,13 +1,29 @@
+import { useAuth } from "@/context/auth";
+import { login, logout } from "@/lib/auth";
 import Link from "next/link";
 import { useState } from "react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const user = useAuth();
+  const [waiting, setWaiting] = useState<boolean>(false);
+
+  const signIn = () => {
+    setWaiting(true);
+
+    login()
+      .catch((error) => {
+        console.error(error?.code);
+      })
+      .finally(() => {
+        setWaiting(false);
+      });
+  };
 
   return (
     <div>
-      <div class="page-background"></div>
-      <nav className="px-5 py-4 text-[#F0E3E3]">
+      <div className="page-background"></div>
+      <nav className="px-5 py text-[#F0E3E3]">
         <div className="flex justify-between items-center">
           <Link href="/">
             <b className="font-semibold text-3xl cursor-pointer">Socrates</b>
@@ -25,6 +41,23 @@ const Navbar = () => {
             <Link href="/chat">
               <b className="cursor-pointer">Debate</b>
             </Link>
+            <div
+              onClick={() => setIsOpen(false)}
+              className="cursor-pointer pl-4"
+            >
+              {user === null && !waiting && (
+                <button onClick={signIn}>
+                  <b>Login</b>
+                </button>
+              )}
+            </div>
+            <div onClick={() => setIsOpen(false)} className="cursor-pointer ">
+              {user && (
+                <button onClick={logout}>
+                  <b>Logout</b>
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <div
@@ -66,6 +99,24 @@ const Navbar = () => {
                   Debate
                 </b>
               </Link>
+            </li>
+            <li>
+              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
+                {user === null && !waiting && (
+                  <button onClick={signIn}>
+                    <b>Login</b>
+                  </button>
+                )}
+              </div>
+            </li>
+            <li>
+              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
+                {user && (
+                  <button onClick={logout}>
+                    <b>Logout</b>
+                  </button>
+                )}
+              </div>
             </li>
           </ul>
         </div>

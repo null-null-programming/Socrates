@@ -1,6 +1,7 @@
 //debate.tsx
 import { useEffect, useRef, useState } from "react";
 import { fetchCurrentSessionState } from "../tools/fetchCurrentSessionState";
+import Navbar from "./Navbar";
 
 interface ChatItem {
   id: string;
@@ -64,7 +65,8 @@ const Debate = ({ sessionId, sessionState }: DebateProps) => {
 
   return (
     <div>
-      <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-white">
+      <div className="mx-auto pt-8 px-4 min-h-screen text-white">
+        <Navbar />
         <div className="flex flex-col items-center justify-center min-h-screen">
           <div className="w-full mb-4 overflow-auto">
             {chatHistory.map((chatItem) => (
