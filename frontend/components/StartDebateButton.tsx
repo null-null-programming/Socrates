@@ -1,22 +1,42 @@
-// StartDebateButton.tsx
+import { useAuth } from "@/context/auth";
+import { db } from "@/lib/firebase";
+import "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useRouter } from "next/router";
 
 const StartDebateButton = () => {
   const router = useRouter();
+  const user = useAuth();
+  const userId = user?.id;
 
   const handleStartDebate = async () => {
     try {
-      // 新しいセッションを作成するAPI呼び出し
-      const res = await fetch("http://localhost:8000/start_session", {
+      if (!userId) {
+        alert("ログインしてください。");
+        return;
+      }
+      const res = await fetch("http://localhost:8000/random_match", {
         method: "POST",
+        body: JSON.stringify({ user_id: userId }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+
+      console.log(res);
+
       if (!res.ok) {
         throw new Error("Failed to start new session");
       }
-      const { session_id } = await res.json();
 
-      // セッションIDをURLパラメータに含めて、ディベートページに遷移
-      router.push(`/debate/${session_id}`);
+      const userDocRef = doc(db, "users", userId);
+      const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        const data = doc.data();
+        if (data && data.sessionId) {
+          router.push(`/session/${data.sessionId}`);
+          unsubscribe();
+        }
+      });
     } catch (error) {
       console.error(error);
       alert("ディベートを開始できませんでした。");

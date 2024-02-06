@@ -1,7 +1,6 @@
 // pages/debate/[session_id].tsx
 import { GetServerSideProps } from "next";
 import Debate from "../../components/Debate";
-import { fetchCurrentSessionState } from "../../tools/fetchCurrentSessionState";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session_id = context.params?.session_id;
@@ -17,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     return { props: { sessionState, sessionId: session_id } };
   } catch (error) {
     console.error(error);
-    return { props: { error: "Failed to fetch session state." } };
+    return { props: { error: "Failed to fetch session state!!!" } };
   }
 };
 
