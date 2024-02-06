@@ -1,6 +1,8 @@
 // lib/fetchCurrentSessionState.tsx
 export const fetchCurrentSessionState = async (session_id: string) => {
-  const res = await fetch(`http://localhost:8000/debate/${session_id}/session`);
+  const res = await fetch(
+    `http://localhost:8000/session/${session_id}/messages`
+  );
 
   if (!res.ok) {
     const error = await res.json();

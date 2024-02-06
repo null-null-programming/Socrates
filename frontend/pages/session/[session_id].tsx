@@ -1,33 +1,63 @@
-// pages/debate/[session_id].tsx
-import { GetServerSideProps } from "next";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import Debate from "../../components/Debate";
+import { db } from "../../lib/firebase";
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const session_id = context.params?.session_id;
-  console.log(session_id);
+const DebatePage = () => {
+  const router = useRouter();
+  const sessionId = router.query.session_id as string;
+  const [sessionState, setSessionState] = useState(null);
+  const [error, setError] = useState("");
 
-  if (typeof session_id !== "string") {
-    return { props: { error: "Invalid session ID." } };
-  }
+  useEffect(() => {
+    if (!sessionId) return;
 
-  // サーバーサイドでセッション状態を取得
-  try {
-    const sessionState = await fetchCurrentSessionState(session_id);
-    return { props: { sessionState, sessionId: session_id } };
-  } catch (error) {
-    console.error(error);
-    return { props: { error: "Failed to fetch session state!!!" } };
-  }
-};
+    // セッションの基本情報を取得
+    const sessionRef = doc(db, `sessions/${sessionId}`);
+    getDoc(sessionRef).then((docSnapshot) => {
+      if (docSnapshot.exists()) {
+        setSessionState(docSnapshot.data());
+      } else {
+        setError("Session not found");
+      }
+    });
 
-const DebatePage = ({ sessionState, sessionId, error }) => {
+    // メッセージのリアルタイム更新をリッスン
+    const q = query(
+      collection(db, `sessions/${sessionId}/debate`),
+      orderBy("timestamp")
+    );
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const messages = [];
+        querySnapshot.forEach((doc) => {
+          messages.push(doc.data());
+        });
+        setSessionState((currentState) => ({ ...currentState, messages }));
+      },
+      (error) => {
+        setError("Failed to fetch session messages");
+        console.error(error);
+      }
+    );
+
+    // コンポーネントアンマウント時にリスナー解除
+    return () => unsubscribe();
+  }, [sessionId]);
+
   if (error) return <p>{error}</p>;
+  if (!sessionState) return <p>Loading...</p>;
 
-  return (
-    <div>
-      <Debate sessionId={sessionId} sessionState={sessionState} />
-    </div>
-  );
+  return <Debate sessionState={sessionState} sessionId={sessionId} />;
 };
 
 export default DebatePage;

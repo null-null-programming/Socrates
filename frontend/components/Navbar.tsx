@@ -7,6 +7,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const user = useAuth();
   const [waiting, setWaiting] = useState<boolean>(false);
+  console.log(user);
 
   const signIn = () => {
     setWaiting(true);

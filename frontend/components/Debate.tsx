@@ -1,66 +1,81 @@
 //debate.tsx
+// src/components/Debate.tsx
+import Navbar from "@/components/Navbar";
+import { useAuth } from "@/context/auth"; // 認証コンテキストフック
+import { db } from "@/lib/firebase"; // Firebase設定のインポートパスを確認してください
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
-import { fetchCurrentSessionState } from "../tools/fetchCurrentSessionState";
-import Navbar from "./Navbar";
 
 interface ChatItem {
   id: string;
   text: string;
-  sender: string;
+  senderId: string;
+  senderName: string;
+  isChat: boolean;
 }
 
 interface DebateProps {
   sessionId: string;
   sessionState: {
-    current_turn: string;
+    currentTurn: string;
     round: number;
     messages: ChatItem[];
+    participants: string[];
   };
 }
 
-const Debate = ({ sessionId, sessionState }: DebateProps) => {
+const Debate = ({ sessionId }: DebateProps) => {
   const [message, setMessage] = useState<string>("");
-  const [chatHistory, setChatHistory] = useState<ChatItem[]>(
-    sessionState.messages || []
-  );
+  const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
   const endOfMessagesRef = useRef<HTMLDivElement | null>(null);
+  const user = useAuth();
 
   useEffect(() => {
+    // ディベートメッセージのリアルタイム購読をセットアップ
+    const messagesRef = collection(db, "sessions", sessionId, "debate");
+    const q = query(messagesRef, orderBy("timestamp"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const updatedMessages: ChatItem[] = [];
+      querySnapshot.forEach((doc) => {
+        updatedMessages.push({ id: doc.id, ...doc.data() } as ChatItem);
+      });
+      setChatHistory(updatedMessages);
+    });
+
+    return () => unsubscribe(); // コンポーネントのクリーンアップで購読解除
+  }, [sessionId, user]);
+
+  useEffect(() => {
+    // 新しいメッセージが追加されたときにスクロール
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
-  // 送信ボタンを押した時の処理
   const sendMessage = async () => {
-    // 現在のセッション状態を取得
-    const sessionState = await fetchCurrentSessionState(sessionId);
-    if (sessionState.current_turn !== "A") {
-      alert("今はあなたのターンではありません。もう少しお待ちください。");
+    if (!user || !user.id) {
+      alert("ログインしてください。");
       return;
     }
 
-    const newMessage = {
-      text: message,
-      sender: "A",
-    };
-    setChatHistory([...chatHistory, newMessage]);
-
-    // メッセージをサーバー側に送信
-    const res = await fetch(`http://localhost:8000/debate/${sessionId}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMessage),
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      alert(error.detail);
-      return;
+    // 新しいメッセージをデータベースに追加
+    try {
+      await addDoc(collection(db, "sessions", sessionId, "debate"), {
+        text: message,
+        senderId: user.id,
+        senderName: user.name || "匿名",
+        isChat: true,
+        timestamp: new Date(),
+      });
+      setMessage(""); // 送信後にメッセージ入力フィールドをクリア
+    } catch (error) {
+      console.error("メッセージの送信に失敗しました。", error);
+      alert("メッセージの送信に失敗しました。");
     }
-
-    const data = await res.json();
-    const newResponse = { text: data.reply };
-    setChatHistory([...chatHistory, newResponse]);
-    setMessage(""); // メッセージ入力フィールドをクリア
   };
 
   return (
@@ -73,7 +88,7 @@ const Debate = ({ sessionId, sessionState }: DebateProps) => {
               <div className="py-3" key={chatItem.id}>
                 <div
                   className={`flex border p-2 mb-2 w-full text-white ${
-                    chatItem.sender === "A"
+                    chatItem.senderId === user?.id
                       ? "border-[#F0E3E3]"
                       : "border-[#2F576E]"
                   }`}

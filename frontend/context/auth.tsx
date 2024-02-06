@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         }
       } else {
+        console.log("fail to get user");
         setUser(null);
       }
 

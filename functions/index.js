@@ -3,53 +3,57 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 exports.matchUsersAndCreateSession = functions.firestore
-    .document('waiting_list/{userId}')
-    .onCreate(async (snap, context) => {
-        // Firestoreのインスタンスを取得
-        const db = admin.firestore();
+  .document('waiting_list/{userId}')
+  .onCreate(async (snap, context) => {
+    const db = admin.firestore();
+    try {
+      await db.runTransaction(async (transaction) => {
+        const waitingListSnapshot = await db.collection('waiting_list').orderBy('timestamp').limit(2).get();
         
-        // 待機リストからユーザーを取得（この例では2人を想定）
-        const snapshot = await db.collection('waiting_list').orderBy('timestamp').limit(2).get();
-
-        if (snapshot.size < 2) {
-            console.log("待機中のユーザーが足りません。");
-            return;
+        if (waitingListSnapshot.size < 2) {
+          console.log("待機中のユーザーが足りません。");
+          return;
         }
 
         const users = [];
-        snapshot.forEach(doc => {
-            users.push(doc.data().user_id);
+        waitingListSnapshot.forEach(doc => {
+          users.push(doc.data().user_id);
         });
 
-        // 新しいセッションを作成
+        if (new Set(users).size !== users.length) {
+          console.log("同一ユーザーでのマッチングを検出しました。");
+          return;
+        }
+
         const sessionRef = db.collection('sessions').doc();
-        await sessionRef.set({
-            participants: users,
-            isActive: true,
-            startTime: admin.firestore.FieldValue.serverTimestamp(),
+        const sessionId = sessionRef.id; // セッションIDを取得
+
+        // ランダムに current_turn を選択
+        const currentTurnIndex = Math.floor(Math.random() * users.length);
+        const currentTurn = users[currentTurnIndex];
+
+        // セッションドキュメントを作成
+        transaction.set(sessionRef, {
+          participants: users,
+          isActive: true,
+          current_turn: currentTurn,
+          startTime: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // 新しいディベートルームをセッションのサブコレクションとして作成
-        const debateRef = sessionRef.collection('debate').doc();
-        await debateRef.set({
-            topic: "",
-            state: "before_debate",
-            participants: users,
-            startTime: admin.firestore.FieldValue.serverTimestamp(),
-            messages: [] // ディベート中に交わされるメッセージのリスト（初期は空）
+        // マッチングしたユーザーの users ドキュメントを更新して sessionId を設定
+        users.forEach(userId => {
+          const userRef = db.collection('users').doc(userId);
+          transaction.update(userRef, { sessionId: sessionId });
         });
-
-        console.log(`セッション ${sessionRef.id} とディベートルームが作成されました。`);
-
-        // ユーザードキュメントにセッションIDを追加
-        await Promise.all(users.map(userId => {
-            const userRef = db.collection('users').doc(userId);
-            return userRef.set({ sessionId: sessionRef.id }, { merge: true });
-        }));
 
         // マッチングしたユーザーを待機リストから削除
-        const deletes = snapshot.docs.map(doc => doc.ref.delete());
-        await Promise.all(deletes);
+        waitingListSnapshot.forEach(doc => {
+          transaction.delete(doc.ref);
+        });
 
-        console.log(`マッチングしたユーザーにセッションIDが通知されました。`);
-    });
+        console.log(`セッション ${sessionId} とディベートルームが作成されました。`);
+      });
+    } catch (error) {
+      console.error("Error creating session: ", error);
+    }
+  });

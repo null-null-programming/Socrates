@@ -15,15 +15,13 @@ const StartDebateButton = () => {
         alert("ログインしてください。");
         return;
       }
-      const res = await fetch("http://localhost:8000/random_match", {
+      const res = await fetch("http://localhost:8000/enqueue", {
         method: "POST",
         body: JSON.stringify({ user_id: userId }),
         headers: {
           "Content-Type": "application/json",
         },
       });
-
-      console.log(res);
 
       if (!res.ok) {
         throw new Error("Failed to start new session");
