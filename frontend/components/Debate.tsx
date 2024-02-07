@@ -31,13 +31,7 @@ const useDisableScroll = () => {
     };
 
     window.addEventListener("resize", handleResize);
-
-    // スクロールの有効/無効を切り替える
-    if (windowWidth <= 768) {
-      document.body.style.overflow = "hidden"; // スクロールを無効にする
-    } else {
-      document.body.style.overflow = "hidden"; // スクロールを無効にする
-    }
+    document.body.style.overflow = "hidden";
 
     return () => {
       window.removeEventListener("resize", handleResize);
@@ -71,28 +65,106 @@ const Debate = ({ sessionId }) => {
     return () => unsubscribe();
   }, [sessionId]);
 
-  // メッセージ送信機能の改善
   const sendMessage = async (isDebateMessage: boolean) => {
-    // ログインチェックはそのまま
+    // ログインチェック
     if (!user) {
       alert("ログインしてください。");
       return;
     }
 
-    // メッセージ送信の試行
     try {
       const message = isDebateMessage ? debateMessage : chatMessage;
       if (!message.trim()) return; // 空のメッセージは送信しない
 
-      await addDoc(collection(db, "sessions", sessionId, "debate"), {
-        text: message,
-        senderId: user.id,
-        senderName: user.name || "匿名",
-        isChat: !isDebateMessage,
-        timestamp: serverTimestamp(),
-      });
-      // メッセージフィールドのクリア
-      isDebateMessage ? setDebateMessage("") : setChatMessage("");
+      if (isDebateMessage) {
+        const debateMessages = chatHistory.filter((item) => !item.isChat);
+        const lastDebateMessage = debateMessages[debateMessages.length - 1];
+        if (lastDebateMessage && lastDebateMessage.senderId === user.id) {
+          alert(
+            "前回のディベートメッセージの送信者が自分自身です。他の人がメッセージを送信するのを待ってください。"
+          );
+          return;
+        }
+        await addDoc(collection(db, "sessions", sessionId, "debate"), {
+          text: message,
+          senderId: user.id,
+          senderName: user.name || "匿名",
+          isChat: false,
+          timestamp: serverTimestamp(),
+        });
+        debateMessages.push({ senderName: user.id, text: message });
+        const debateString = debateMessages
+          .map((item) => `${item.senderName} : ${item.text}\n`)
+          .join("");
+
+        setDebateMessage("");
+
+        const newLength = debateMessages.length;
+        let url = "";
+        if ([4, 6].includes(newLength)) {
+          url = `http://localhost:8000/session/${sessionId}/eval`;
+        } else if (newLength === 8) {
+          url = `http://localhost:8000/session/${sessionId}/final_eval`;
+        }
+
+        if (url) {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ debate: debateString }),
+          });
+
+          if (!res.ok) {
+            const error = await res.json();
+            alert(error.detail);
+            throw new Error("Failed to fetch session state");
+          }
+
+          const json = await res.json();
+          const data = json["eval"];
+
+          const EvalHistory = [];
+          for (const [userName, scores] of Object.entries(data)) {
+            if (userName === "round") continue;
+            let text = `UserName: ${userName}\n\n`;
+            for (const [category, details] of Object.entries(scores)) {
+              if (category === "得点") {
+                text += `${category}\n合計 ${details["合計"]}\n`;
+              } else {
+                text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
+              }
+            }
+            EvalHistory.push({
+              senderId: "system",
+              senderName: "system",
+              isChat: true,
+              text: text,
+              timestamp: serverTimestamp(),
+            });
+          }
+
+          // Firestoreデータベースに結果を保存
+          const promises = EvalHistory.map((item) =>
+            addDoc(collection(db, "sessions", sessionId, "debate"), item)
+          );
+          await Promise.all(promises);
+
+          // メッセージフィールドのクリア
+          setDebateMessage("");
+        }
+      } else {
+        await addDoc(collection(db, "sessions", sessionId, "debate"), {
+          text: message,
+          senderId: user.id,
+          senderName: user.name || "匿名",
+          isChat: true,
+          timestamp: serverTimestamp(),
+        });
+
+        setChatMessage(""); // チャットメッセージ入力フィールドを空にする
+      }
     } catch (error) {
       console.error("メッセージの送信に失敗しました。", error);
       alert("メッセージの送信に失敗しました。");
@@ -118,10 +190,13 @@ const Debate = ({ sessionId }) => {
   );
 
   const messageContainerClass =
-    window.innerWidth >= 768 ? "p-4 h-3/5" : "p-4 h-1/3";
+    window.innerWidth >= 768 ? "p-4 h-1/2" : "p-4 h-2/3";
 
   const messageContainerClass2 =
     window.innerWidth >= 768 ? "overflow-auto h-full" : "overflow-auto h-4/5";
+
+  const messageContainerClass3 =
+    window.innerWidth >= 768 ? "overflow-auto h-full" : "overflow-auto h-2/5";
 
   return (
     <div className="flex flex-col min-h-screen text-white p-1">
@@ -143,6 +218,7 @@ const Debate = ({ sessionId }) => {
                           key={item.id}
                           className="p-2 bg-gray-700 rounded my-2"
                         >
+                          <p>{item.senderName}</p>
                           <p>{item.text}</p>
                         </div>
                       ))}
@@ -154,15 +230,21 @@ const Debate = ({ sessionId }) => {
               <div className="w-full md:w-1/2 overflow-auto">
                 <div className={messageContainerClass}>
                   <h2 className="text-lg font-semibold">Chat Messages</h2>
-                  <div className="overflow-auto h-full">
+                  <div className={messageContainerClass3}>
                     {chatHistory
                       .filter((item) => item.isChat)
                       .map((item) => (
-                        <div
-                          key={item.id}
-                          className="p-2 bg-gray-700 rounded my-2"
-                        >
-                          <p>{item.text}</p>
+                        <div key={item.id}>
+                          <p>{item.senderName}</p>
+                          {item.senderId === "system" ? (
+                            <pre className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
+                              {item.text}
+                            </pre>
+                          ) : (
+                            <p className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
+                              {item.text}
+                            </p>
+                          )}
                         </div>
                       ))}
                   </div>
@@ -172,7 +254,7 @@ const Debate = ({ sessionId }) => {
           </div>
         </div>
       </div>
-      <div className="fixed bottom-2 w-full">
+      <div className="fixed bottom-3 w-full">
         <div className="flex flex-wrap">
           {/* ディベートメッセージ入力エリア */}
           {(activeTab === "debate" || window.innerWidth >= 768) && (

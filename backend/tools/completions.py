@@ -2,7 +2,7 @@ import os
 import json
 from dotenv import load_dotenv
 from openai import OpenAI
-from instructions.scoring import scoring_instructions
+from .instructions.scoring import scoring_instructions
 
 
 class Completions:

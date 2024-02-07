@@ -3,10 +3,9 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import firestore
 from datetime import datetime
+from tools.completions import Completions
 
 app = FastAPI()
-db = firestore.Client()
-
 # CORS設定
 origins = ["http://localhost:3000"]
 app.add_middleware(
@@ -18,12 +17,32 @@ app.add_middleware(
 )
 
 
-class UserRequest(BaseModel):
-    user_id: str
+# リクエストモデル定義
+class EvaluationRequest(BaseModel):
+    debate: str
 
 
-class SendMessageRequest(BaseModel):
-    sender_id: str
-    sender_name: str
-    text: str
-    isChat: bool
+# evalエンドポイント定義
+@app.post("/session/{session_id}/eval")
+async def evaluate_debate(request: EvaluationRequest):
+    try:
+        # ディベート評価処理
+        completions = Completions()
+        result = completions.get_eval_result(request.debate)
+        print(result)
+        return {"eval": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# final_evalエンドポイント定義
+@app.post("/session/{session_id}/final_eval")
+async def final_evaluate_debate(request: EvaluationRequest):
+    try:
+        # ディベート最終評価処理
+        completions = Completions()
+        result = completions.get_eval_result(request.debate)
+        print(result)
+        return {"eval": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
