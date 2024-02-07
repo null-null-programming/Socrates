@@ -189,15 +189,6 @@ const Debate = ({ sessionId }) => {
     </div>
   );
 
-  const messageContainerClass =
-    window.innerWidth >= 768 ? "p-4 h-1/2" : "p-4 h-2/3";
-
-  const messageContainerClass2 =
-    window.innerWidth >= 768 ? "overflow-auto h-full" : "overflow-auto h-4/5";
-
-  const messageContainerClass3 =
-    window.innerWidth >= 768 ? "overflow-auto h-full" : "overflow-auto h-2/5";
-
   return (
     <div className="flex flex-col min-h-screen text-white p-1">
       <Navbar />
@@ -207,60 +198,62 @@ const Debate = ({ sessionId }) => {
           <div className="flex-grow flex md:flex-row">
             {/* タブ切り替えまたはPC表示の条件レンダリング */}
             {(activeTab === "debate" || window.innerWidth >= 768) && (
-              <div className="w-full md:w-1/2 overflow-auto">
-                <div className={messageContainerClass}>
-                  <h2 className="text-lg font-semibold">Debate Messages</h2>
-                  <div className={messageContainerClass2}>
-                    {chatHistory
-                      .filter((item) => !item.isChat)
-                      .map((item) => (
-                        <div
-                          key={item.id}
-                          className="p-2 bg-gray-700 rounded my-2"
-                        >
-                          <p>{item.senderName}</p>
-                          <p>{item.text}</p>
-                        </div>
-                      ))}
-                  </div>
+              <div
+                className="w-full md:w-1/2 overflow-auto"
+                style={{ height: `${window.innerHeight / 2}px` }}
+              >
+                <h2 className="text-lg font-semibold">Debate Messages</h2>
+                <div className="h-full">
+                  {chatHistory
+                    .filter((item) => !item.isChat)
+                    .map((item) => (
+                      <div key={item.id}>
+                        <p>{item.senderName}</p>
+                        <p className="p-2 bg-gray-700 rounded my-2">
+                          {item.text}
+                        </p>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
             {(activeTab === "chat" || window.innerWidth >= 768) && (
-              <div className="w-full md:w-1/2 overflow-auto">
-                <div className={messageContainerClass}>
-                  <h2 className="text-lg font-semibold">Chat Messages</h2>
-                  <div className={messageContainerClass3}>
-                    {chatHistory
-                      .filter((item) => item.isChat)
-                      .map((item) => (
-                        <div key={item.id}>
-                          <p>{item.senderName}</p>
-                          {item.senderId === "system" ? (
-                            <pre className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
-                              {item.text}
-                            </pre>
-                          ) : (
-                            <p className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
-                              {item.text}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                  </div>
+              <div
+                className="w-full md:w-1/2 overflow-auto"
+                style={{ height: `${window.innerHeight / 2}px` }}
+              >
+                <h2 className="text-lg font-semibold">Chat Messages</h2>
+                <div className="h-full">
+                  {chatHistory
+                    .filter((item) => item.isChat)
+                    .map((item) => (
+                      <div key={item.id}>
+                        <p>{item.senderName}</p>
+                        {item.senderId === "system" ? (
+                          <pre className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
+                            {item.text}
+                          </pre>
+                        ) : (
+                          <p className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
+                            {item.text}
+                          </p>
+                        )}
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
-      <div className="fixed bottom-3 w-full">
+      <div className="fixed bottom-0 w-full">
         <div className="flex flex-wrap">
           {/* ディベートメッセージ入力エリア */}
           {(activeTab === "debate" || window.innerWidth >= 768) && (
-            <div className="w-full md:w-1/2 p-5">
+            <div className="w-full md:w-1/2 p-3">
               <textarea
-                className="border bg-[#191825] border-[#F0E3E3] p-4 text-white w-full h-60"
+                className="border bg-[#191825] border-[#F0E3E3] p-4 text-white w-full"
+                style={{ height: `${window.innerHeight / 7}px` }}
                 placeholder="Your debate message"
                 value={debateMessage}
                 onChange={(e) => setDebateMessage(e.target.value)}
@@ -275,9 +268,10 @@ const Debate = ({ sessionId }) => {
           )}
           {/* チャットメッセージ入力エリア */}
           {(activeTab === "chat" || window.innerWidth >= 768) && (
-            <div className="w-full md:w-1/2 p-5">
+            <div className="w-full md:w-1/2 p-3">
               <textarea
-                className="border bg-[#191825] border-[#F0E3E3] p-4 text-white w-full h-60"
+                className="border bg-[#191825] border-[#F0E3E3] p-4 text-white w-full"
+                style={{ height: `${window.innerHeight / 7}px` }}
                 placeholder="Your chat message"
                 value={chatMessage}
                 onChange={(e) => setChatMessage(e.target.value)}

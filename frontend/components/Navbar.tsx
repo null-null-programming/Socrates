@@ -23,7 +23,7 @@ const Navbar = () => {
   return (
     <div>
       <div className="page-background"></div>
-      <nav className="px-5 py text-[#F0E3E3]">
+      <nav className="px-5 py-3 text-[#F0E3E3]">
         <div className="flex justify-between items-center">
           <Link href="/">
             <b className="font-semibold text-3xl cursor-pointer">Socrates</b>
