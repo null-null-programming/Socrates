@@ -1,4 +1,5 @@
 // lib/fetchCurrentSessionState.tsx
+/*
 export const fetchCurrentSessionState = async (session_id: string) => {
   const res = await fetch(
     `http://localhost:8000/session/${session_id}/messages`
@@ -12,3 +13,4 @@ export const fetchCurrentSessionState = async (session_id: string) => {
   const data = await res.json();
   return data;
 };
+*/

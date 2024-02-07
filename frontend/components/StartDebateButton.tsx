@@ -1,7 +1,8 @@
 import { useAuth } from "@/context/auth";
-import { db } from "@/lib/firebase";
+import { db, functions } from "@/lib/firebase";
 import "firebase/firestore";
 import { doc, onSnapshot } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import { useRouter } from "next/router";
 
 const StartDebateButton = () => {
@@ -15,28 +16,28 @@ const StartDebateButton = () => {
         alert("ログインしてください。");
         return;
       }
-      const res = await fetch("http://localhost:8000/enqueue", {
-        method: "POST",
-        body: JSON.stringify({ user_id: userId }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
 
-      if (!res.ok) {
+      // Firebase Functionの呼び出しに変更
+      const enqueueUser = httpsCallable(functions, "enqueueUser");
+
+      const result = await enqueueUser({ user_id: userId });
+
+      // 結果のハンドリング（resultから必要なデータを取り出す）
+      if (result.data.status !== "queued") {
         throw new Error("Failed to start new session");
       }
 
+      // 成功した場合、Firebase Firestoreのリスナーを設定
       const userDocRef = doc(db, "users", userId);
       const unsubscribe = onSnapshot(userDocRef, (doc) => {
         const data = doc.data();
         if (data && data.sessionId) {
-          router.push(`/session/${data.sessionId}`);
-          unsubscribe();
+          unsubscribe(); // サブスクリプションのキャンセル
+          router.push(`/session/${data.sessionId}`); // セッションページへの遷移
         }
       });
     } catch (error) {
-      console.error(error);
+      console.error("Error starting debate:", error);
       alert("ディベートを開始できませんでした。");
     }
   };
