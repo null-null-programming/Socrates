@@ -1,11 +1,21 @@
-import { AuthProvider } from "@/context/auth";
+import useCheckSession from "@/components/UseCheckSession"; // 正しいインポートパスを確認してください
+import { AuthProvider, useAuth } from "@/context/auth";
 import type { AppProps } from "next/app";
 import "../styles/global.css";
 
+function WithSessionCheck({ children }) {
+  const user = useAuth(); // AuthProvider内部でuseAuthを使用
+  useCheckSession(user?.id);
+  return <>{children}</>; // 子コンポーネントをそのまま表示
+}
+
 export default function App({ Component, pageProps }: AppProps) {
+  // AuthProviderの内部でWithSessionCheckを使用
   return (
     <AuthProvider>
-      <Component {...pageProps} />
+      <WithSessionCheck>
+        <Component {...pageProps} />
+      </WithSessionCheck>
     </AuthProvider>
   );
 }

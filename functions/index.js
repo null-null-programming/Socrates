@@ -75,27 +75,3 @@ exports.matchUsersAndCreateSession = functions.firestore
   
     return {status: "queued", user_id: userRequest.user_id};
   });
-  
-/*
-  exports.postSessionMessage = functions.https.onCall(async (data, context) => {
-    // ユーザー認証を確認
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
-    }
-  
-    const db = admin.firestore();
-    const { session_id, message } = data;
-  
-    const sessionRef = db.collection('sessions').doc(session_id);
-  
-    // セッションのドキュメントを安全に追加します。
-    const messageRef = await sessionRef.collection('debate').add({
-      sender: context.auth.uid,
-      text: message.text,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      isChat: message.isChat
-    });
-  
-    return { messageRefId: messageRef.id };
-  });
-*/
