@@ -2,7 +2,7 @@
 /*
 export const fetchCurrentSessionState = async (session_id: string) => {
   const res = await fetch(
-    `http://localhost:8000/session/${session_id}/messages`
+    `http://localhost:8000/session/${session_id}/judge`
   );
 
   if (!res.ok) {

@@ -10,7 +10,7 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 // ChatItem インターフェイスはそのままに保持
 interface ChatItem {
@@ -21,6 +21,9 @@ interface ChatItem {
   isChat: boolean;
   timestamp: any;
 }
+
+const MAX_TIME = 60; // 3min
+const MAX_CHARACTERS = 3000;
 
 const useDisableScroll = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -47,8 +50,53 @@ const Debate = ({ sessionId }) => {
   const [debateMessage, setDebateMessage] = useState<string>("");
   const [chatMessage, setChatMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
-  const endOfMessagesRef = useRef<HTMLDivElement | null>(null);
+  const [remainingTime, setRemainingTime] = useState(MAX_TIME);
   const user = useAuth();
+
+  const [userRemainingCharacters, setUserRemainingCharacters] =
+    useState(MAX_CHARACTERS);
+
+  const updateRemainingCharacters = () => {
+    let userTotalCharacters = 0;
+    let lastUserTimestamp = null;
+
+    chatHistory.forEach((item) => {
+      // 自分の送信したメッセージだけをカウント
+      if (item.senderId === user?.id && !item.isChat) {
+        userTotalCharacters += item.text.length;
+        lastUserTimestamp = item.timestamp;
+      }
+    });
+
+    const userRemaining = MAX_CHARACTERS - userTotalCharacters;
+    setUserRemainingCharacters(userRemaining > 0 ? userRemaining : 0);
+  };
+
+  // chatHistory または debateMessage が変更されるたびに、文字数と時間を更新
+  useEffect(() => {
+    updateRemainingCharacters();
+  }, [chatHistory, debateMessage]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRemainingTime((prevTime) => {
+        if (prevTime > 0) {
+          return prevTime - 1;
+        } else {
+          clearInterval(timer);
+          return 0;
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
+  };
 
   // メッセージ読み込みの useEffect はそのままに保持
   useEffect(() => {
@@ -65,6 +113,75 @@ const Debate = ({ sessionId }) => {
     return () => unsubscribe();
   }, [sessionId]);
 
+  const analyzeAndSaveEvaluationResult = async (json) => {
+    const data = json["eval"];
+
+    const EvalHistory = [];
+    let text = "";
+    for (const [userName, scores] of Object.entries(data)) {
+      if (userName === "round") continue;
+      text += `UserName: ${userName}\n\n`;
+      for (const [category, details] of Object.entries(scores)) {
+        if (category === "得点") {
+          text += `${category}\n合計 ${details["合計"]}\n`;
+        } else {
+          text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
+        }
+      }
+    }
+    EvalHistory.push({
+      senderId: "system",
+      senderName: "system",
+      isChat: false,
+      text: text,
+      timestamp: serverTimestamp(),
+    });
+    // Firestoreデータベースに結果を保存
+    const promises = EvalHistory.map((item) =>
+      addDoc(collection(db, "sessions", sessionId, "debate"), item)
+    );
+    await Promise.all(promises);
+
+    //debateMessage.push({ senderName: "system", text: text });
+  };
+
+  const evaluateDebate = async () => {
+    // 現在のディベートメッセージの状態を取得
+    const debateMessages = chatHistory.filter((item) => !item.isChat);
+    const debateString = debateMessages
+      .map((item) => `${item.senderName} : ${item.text}\n`)
+      .join("");
+
+    let url = `http://localhost:8000/session/${sessionId}/eval`;
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ debate: debateString }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.detail);
+        throw new Error("Failed to perform evaluation");
+      }
+
+      const json = await res.json();
+      analyzeAndSaveEvaluationResult(json);
+    } catch (error) {
+      console.error("Evaluation failed:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (remainingTime === 0) {
+      evaluateDebate();
+    }
+  }, [remainingTime]);
+
   const sendMessage = async (isDebateMessage: boolean) => {
     // ログインチェック
     if (!user) {
@@ -76,95 +193,23 @@ const Debate = ({ sessionId }) => {
       const message = isDebateMessage ? debateMessage : chatMessage;
       if (!message.trim()) return; // 空のメッセージは送信しない
 
-      if (isDebateMessage) {
-        const debateMessages = chatHistory.filter((item) => !item.isChat);
-        const lastDebateMessage = debateMessages[debateMessages.length - 1];
-        if (lastDebateMessage && lastDebateMessage.senderId === user.id) {
-          alert(
-            "前回のディベートメッセージの送信者が自分自身です。他の人がメッセージを送信するのを待ってください。"
-          );
-          return;
-        }
-        await addDoc(collection(db, "sessions", sessionId, "debate"), {
-          text: message,
-          senderId: user.id,
-          senderName: user.name || "匿名",
-          isChat: false,
-          timestamp: serverTimestamp(),
-        });
-        debateMessages.push({ senderName: user.id, text: message });
-        const debateString = debateMessages
-          .map((item) => `${item.senderName} : ${item.text}\n`)
-          .join("");
-
-        setDebateMessage("");
-
-        const newLength = debateMessages.length;
-        let url = "";
-        if ([4, 6].includes(newLength)) {
-          url = `http://localhost:8000/session/${sessionId}/eval`;
-        } else if (newLength === 8) {
-          url = `http://localhost:8000/session/${sessionId}/final_eval`;
-        }
-
-        if (url) {
-          const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ debate: debateString }),
-          });
-
-          if (!res.ok) {
-            const error = await res.json();
-            alert(error.detail);
-            throw new Error("Failed to fetch session state");
-          }
-
-          const json = await res.json();
-          const data = json["eval"];
-
-          const EvalHistory = [];
-          for (const [userName, scores] of Object.entries(data)) {
-            if (userName === "round") continue;
-            let text = `UserName: ${userName}\n\n`;
-            for (const [category, details] of Object.entries(scores)) {
-              if (category === "得点") {
-                text += `${category}\n合計 ${details["合計"]}\n`;
-              } else {
-                text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
-              }
-            }
-            EvalHistory.push({
-              senderId: "system",
-              senderName: "system",
-              isChat: true,
-              text: text,
-              timestamp: serverTimestamp(),
-            });
-          }
-
-          // Firestoreデータベースに結果を保存
-          const promises = EvalHistory.map((item) =>
-            addDoc(collection(db, "sessions", sessionId, "debate"), item)
-          );
-          await Promise.all(promises);
-
-          // メッセージフィールドのクリア
-          setDebateMessage("");
-        }
-      } else {
-        await addDoc(collection(db, "sessions", sessionId, "debate"), {
-          text: message,
-          senderId: user.id,
-          senderName: user.name || "匿名",
-          isChat: true,
-          timestamp: serverTimestamp(),
-        });
-
-        setChatMessage(""); // チャットメッセージ入力フィールドを空にする
+      const debateMessages = chatHistory.filter((item) => !item.isChat);
+      const lastDebateMessage = debateMessages[debateMessages.length - 1];
+      if (lastDebateMessage && lastDebateMessage.senderId === user.id) {
+        alert(
+          "前回のディベートメッセージの送信者が自分自身です。他の人がメッセージを送信するのを待ってください。"
+        );
+        return;
       }
+      await addDoc(collection(db, "sessions", sessionId, "debate"), {
+        text: message,
+        senderId: user.id,
+        senderName: user.name || "匿名",
+        isChat: false,
+        timestamp: serverTimestamp(),
+      });
+
+      setDebateMessage("");
     } catch (error) {
       console.error("メッセージの送信に失敗しました。", error);
       alert("メッセージの送信に失敗しました。");
@@ -209,9 +254,9 @@ const Debate = ({ sessionId }) => {
                     .map((item) => (
                       <div key={item.id}>
                         <p>{item.senderName}</p>
-                        <p className="p-2 bg-gray-700 rounded my-2">
+                        <pre className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
                           {item.text}
-                        </p>
+                        </pre>
                       </div>
                     ))}
                 </div>
@@ -222,25 +267,9 @@ const Debate = ({ sessionId }) => {
                 className="w-full md:w-1/2 overflow-auto"
                 style={{ height: `${window.innerHeight / 2}px` }}
               >
-                <h2 className="text-lg font-semibold">Chat Messages</h2>
-                <div className="h-full">
-                  {chatHistory
-                    .filter((item) => item.isChat)
-                    .map((item) => (
-                      <div key={item.id}>
-                        <p>{item.senderName}</p>
-                        {item.senderId === "system" ? (
-                          <pre className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
-                            {item.text}
-                          </pre>
-                        ) : (
-                          <p className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
-                            {item.text}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                </div>
+                <h2 className="text-lg font-semibold">Info</h2>
+                <p>Remaining characters: {userRemainingCharacters}</p>
+                <p>Remaining time: {formatTime(remainingTime)}</p>
               </div>
             )}
           </div>
@@ -268,21 +297,7 @@ const Debate = ({ sessionId }) => {
           )}
           {/* チャットメッセージ入力エリア */}
           {(activeTab === "chat" || window.innerWidth >= 768) && (
-            <div className="w-full md:w-1/2 p-3">
-              <textarea
-                className="border bg-[#191825] border-[#F0E3E3] p-4 text-white w-full"
-                style={{ height: `${window.innerHeight / 7}px` }}
-                placeholder="Your chat message"
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-              ></textarea>
-              <button
-                className="mt-4 px-6 py-3 border border-[#FF6969] text-white font-bold rounded-lg shadow-lg hover:bg-[#FF6969] transition duration-300 ease-in-out"
-                onClick={() => sendMessage(false)}
-              >
-                Send Chat
-              </button>
-            </div>
+            <div className="w-full md:w-1/2 p-3"></div>
           )}
         </div>
       </div>
