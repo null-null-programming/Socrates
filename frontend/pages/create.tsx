@@ -30,28 +30,6 @@ const IndexPage = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (!user) {
-      alert("ログインしてください。");
-      router.push("/");
-      return;
-    }
-
-    const unsubscribe = onSnapshot(doc(db, "users", userId), (doc) => {
-      const data = doc.data();
-      // セッションIDがnullまたは未定義でない場合、ローディング状態をtrueに設定します。
-      // そうでない場合、falseに設定します。
-      setIsLoading(!!data?.sessionId);
-
-      if (data?.sessionId) {
-        // セッションIDが存在する場合、セッションページにリダイレクトする処理（既存のコード）
-        //router.push(`/session/${data.sessionId}`);
-      }
-    });
-
-    return () => unsubscribe(); // コンポーネントがアンマウントされる時にリスナーを解除
-  }, [userId, router]);
-
   const deleteWaitingList = async (userId) => {
     if (!userId) {
       alert("ログインしてください。");
@@ -126,6 +104,7 @@ const IndexPage = () => {
           }
         });
       } else if (result.data.status === "matched") {
+        setIsLoading(false);
         router.push(`/session/${result.data.session_id}`);
       }
 
@@ -141,6 +120,7 @@ const IndexPage = () => {
     <div className="japanese-font">
       <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-outline">
         <Navbar />
+
         <div className="text-center p-8">
           <h2 className="text-3xl font-bold mt-8 mb-4">ルーム作成</h2>
           <ul

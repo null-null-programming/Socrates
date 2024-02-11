@@ -5,11 +5,14 @@ import { db } from "@/lib/firebase";
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
 } from "firebase/firestore";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 // ChatItem インターフェイスはそのままに保持
@@ -22,7 +25,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 3000; // 5min
+const MAX_TIME = 30; // 5min
 const MAX_CHARACTERS = 1000;
 
 const useDisableScroll = () => {
@@ -52,9 +55,12 @@ const Debate = ({ sessionId }) => {
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
   const [remainingTime, setRemainingTime] = useState(MAX_TIME);
   const user = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [userRemainingCharacters, setUserRemainingCharacters] =
     useState(MAX_CHARACTERS);
+
+  const router = useRouter();
 
   const updateRemainingCharacters = () => {
     let userTotalCharacters = 0;
@@ -71,6 +77,45 @@ const Debate = ({ sessionId }) => {
     const userRemaining = MAX_CHARACTERS - userTotalCharacters;
     setUserRemainingCharacters(userRemaining > 0 ? userRemaining : 0);
   };
+
+  useEffect(() => {
+    // セッションのドキュメントからstartTimeを取得
+    const getSessionStartTime = async () => {
+      const sessionRef = doc(db, "sessions", sessionId);
+      const sessionSnap = await getDoc(sessionRef);
+
+      if (sessionSnap.exists()) {
+        const sessionData = sessionSnap.data();
+        const startTime = sessionData.startTime.toDate(); // FirebaseのTimestampをDateオブジェクトに変換
+        const now = new Date();
+
+        // 現在時刻とstartTimeの差（ミリ秒）を算出
+        const timeDiff = now.getTime() - startTime.getTime();
+
+        // 差分（ミリ秒）を秒に変換し、MAX_TIMEから引いた値を設定
+        let newRemainingTime = MAX_TIME - Math.floor(timeDiff / 1000);
+
+        // 残り時間が負の数にならないようにチェック
+        newRemainingTime = newRemainingTime > 0 ? newRemainingTime : 0;
+        setRemainingTime(newRemainingTime);
+      } else {
+        console.log("No such session!");
+      }
+    };
+
+    getSessionStartTime();
+  }, [sessionId]);
+
+  useEffect(() => {
+    // chatHistoryの最後のメッセージを確認
+    const lastMessage = chatHistory[chatHistory.length - 1];
+
+    // 最後のメッセージが存在し、そのsenderNameが'system'である場合、
+    // ローディングを終了する（isLoadingをfalseに設定）
+    if (lastMessage && lastMessage.senderName === "system") {
+      setIsLoading(false);
+    }
+  }, [chatHistory]);
 
   // chatHistory または debateMessage が変更されるたびに、文字数と時間を更新
   useEffect(() => {
@@ -132,7 +177,7 @@ const Debate = ({ sessionId }) => {
     EvalHistory.push({
       senderId: "system",
       senderName: "system",
-      isChat: false,
+      isChat: true,
       text: text,
       timestamp: serverTimestamp(),
     });
@@ -178,7 +223,28 @@ const Debate = ({ sessionId }) => {
 
   useEffect(() => {
     if (remainingTime === 0) {
-      evaluateDebate();
+      const lastDebateMessage = chatHistory
+        .filter((item) => !item.isChat)
+        .pop();
+
+      const hasEnded = chatHistory.filter((item) => item.isChat).pop();
+
+      console.log(hasEnded);
+
+      if (!lastDebateMessage) {
+        router.push("/");
+        return;
+      }
+
+      if (hasEnded) {
+        return;
+      }
+
+      setIsLoading(true);
+
+      if (lastDebateMessage && lastDebateMessage.senderId === user?.id) {
+        evaluateDebate();
+      }
     }
   }, [remainingTime]);
 
@@ -239,7 +305,7 @@ const Debate = ({ sessionId }) => {
                 className="w-full md:w-1/2 overflow-auto"
                 style={{ height: `${window.innerHeight / 2}px` }}
               >
-                <h2 className="text-lg font-semibold">Debate Messages</h2>
+                <h2 className="text-5xl apply-font">Debate Messages</h2>
                 <div className="h-full">
                   {chatHistory
                     .filter((item) => !item.isChat)
@@ -268,9 +334,35 @@ const Debate = ({ sessionId }) => {
                 className="w-full md:w-1/2 overflow-auto"
                 style={{ height: `${window.innerHeight / 2}px` }}
               >
-                <h2 className="text-lg font-semibold">Info</h2>
-                <p>Remaining characters: {userRemainingCharacters}</p>
-                <p>Remaining time: {formatTime(remainingTime)}</p>
+                <div className=" text-white p-4 rounded-lg shadow-lg flex items-center justify-between">
+                  <div>
+                    {remainingTime > 0 && (
+                      <>
+                        <h2 className="text-5xl font-semibold apply-font">
+                          Information
+                        </h2>
+                        <p className="text-xl font-bold flex items-center japanese-font">
+                          <i className="fas fa-characters mr-2"></i>残り文字数:{" "}
+                          {userRemainingCharacters}文字
+                        </p>
+                        <p className="text-xl font-bold flex items-center japanese-font">
+                          <i className="fas fa-hourglass-end mr-2"></i>残り時間:{" "}
+                          {formatTime(remainingTime)}
+                        </p>
+                      </>
+                    )}
+                    {chatHistory
+                      .filter((item) => item.isChat)
+                      .map((item) => (
+                        <div key={item.id}>
+                          <h1 className="text-8xl apply-font">RESULT</h1>
+                          <pre className="p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825] border border-[#EBF400]">
+                            {item.text}
+                          </pre>
+                        </div>
+                      ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -302,6 +394,11 @@ const Debate = ({ sessionId }) => {
           )}
         </div>
       </div>
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        </div>
+      )}
     </div>
   );
 };
