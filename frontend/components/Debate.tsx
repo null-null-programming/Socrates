@@ -193,14 +193,6 @@ const Debate = ({ sessionId }) => {
       const message = isDebateMessage ? debateMessage : chatMessage;
       if (!message.trim()) return; // 空のメッセージは送信しない
 
-      const debateMessages = chatHistory.filter((item) => !item.isChat);
-      const lastDebateMessage = debateMessages[debateMessages.length - 1];
-      if (lastDebateMessage && lastDebateMessage.senderId === user.id) {
-        alert(
-          "前回のディベートメッセージの送信者が自分自身です。他の人がメッセージを送信するのを待ってください。"
-        );
-        return;
-      }
       await addDoc(collection(db, "sessions", sessionId, "debate"), {
         text: message,
         senderId: user.id,
