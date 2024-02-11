@@ -21,12 +21,12 @@ const Navbar = () => {
   };
 
   return (
-    <div>
+    <div className="apply-font">
       <div className="page-background"></div>
-      <nav className="px-5 py-3 text-[#F0E3E3]">
+      <nav className="px-5 py-0text-[#F0E3E3]">
         <div className="flex justify-between items-center">
           <Link href="/">
-            <b className="font-semibold text-3xl cursor-pointer">Socrates</b>
+            <b className="font-semibold text-6xl cursor-pointer">Socrates</b>
           </Link>
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -34,16 +34,20 @@ const Navbar = () => {
           >
             ☰
           </button>
-          <div className="hidden md:flex">
+          <div className="hidden md:flex text-5xl">
             <Link href="/">
               <b className="mr-4 cursor-pointer">Home</b>
             </Link>
-            <Link href="/create">
-              <b className="mr-4 cursor-pointer">Create</b>
-            </Link>
-            <Link href="/room">
-              <b className="mr-4 cursor-pointer">Room</b>
-            </Link>
+            {user && (
+              <Link href="/create">
+                <b className="mr-4 cursor-pointer">Create</b>
+              </Link>
+            )}
+            {user && (
+              <Link href="/room">
+                <b className="mr-4 cursor-pointer">Room</b>
+              </Link>
+            )}
             <div
               onClick={() => setIsOpen(false)}
               className="cursor-pointer pl-4"
@@ -76,7 +80,7 @@ const Navbar = () => {
         >
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-5 right-5 text-4xl cursor-pointer focus:outline-none transition-transform duration-300 ease-out"
+            className="absolute top-5 right-5 text-8xl cursor-pointer focus:outline-none transition-transform duration-300 ease-out"
             style={{
               transform: isOpen ? "rotate(0)" : "rotate(90deg)",
               willChange: "transform",
@@ -91,27 +95,43 @@ const Navbar = () => {
           >
             <li>
               <Link href="/">
-                <b onClick={() => setIsOpen(false)} className="cursor-pointer">
+                <b
+                  onClick={() => setIsOpen(false)}
+                  className="cursor-pointer text-7xl"
+                >
                   Home
                 </b>
               </Link>
             </li>
+            {user && (
+              <li>
+                <Link href="/create">
+                  <b
+                    onClick={() => setIsOpen(false)}
+                    className="cursor-pointer text-7xl"
+                  >
+                    Create
+                  </b>
+                </Link>
+              </li>
+            )}
+            {user && (
+              <li>
+                <Link href="/room">
+                  <b
+                    onClick={() => setIsOpen(false)}
+                    className="cursor-pointer text-7xl"
+                  >
+                    Room
+                  </b>
+                </Link>
+              </li>
+            )}
             <li>
-              <Link href="/create">
-                <b onClick={() => setIsOpen(false)} className="cursor-pointer">
-                  Create
-                </b>
-              </Link>
-            </li>
-            <li>
-              <Link href="/room">
-                <b onClick={() => setIsOpen(false)} className="cursor-pointer">
-                  Room
-                </b>
-              </Link>
-            </li>
-            <li>
-              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
+              <div
+                onClick={() => setIsOpen(false)}
+                className="cursor-pointer text-7xl"
+              >
                 {user === null && !waiting && (
                   <button onClick={signIn}>
                     <b>Login</b>
@@ -120,7 +140,10 @@ const Navbar = () => {
               </div>
             </li>
             <li>
-              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
+              <div
+                onClick={() => setIsOpen(false)}
+                className="cursor-pointer text-7xl"
+              >
                 {user && (
                   <button onClick={logout}>
                     <b>Logout</b>

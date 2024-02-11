@@ -23,7 +23,7 @@ interface ChatItem {
 }
 
 const MAX_TIME = 300; // 5min
-const MAX_CHARACTERS = 3000;
+const MAX_CHARACTERS = 1000;
 
 const useDisableScroll = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);

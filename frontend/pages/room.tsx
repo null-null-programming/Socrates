@@ -12,6 +12,12 @@ const WaitingRoomsPage = () => {
   const router = useRouter();
   const user = useAuth();
 
+  if (!user) {
+    alert("ログインしてください。");
+    router.push("/");
+    return;
+  }
+
   useEffect(() => {
     const fetchWaitingRooms = async () => {
       const waitingListRef = collection(db, "waiting_list");

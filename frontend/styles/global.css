@@ -1,6 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Honk&display=swap');
+
+.apply-font {
+  font-family: 'Honk', system-ui;
+}
 
 .centered-container {
   display: flex;

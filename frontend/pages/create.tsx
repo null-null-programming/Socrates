@@ -31,7 +31,11 @@ const IndexPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!user) {
+      alert("ログインしてください。");
+      router.push("/");
+      return;
+    }
 
     const unsubscribe = onSnapshot(doc(db, "users", userId), (doc) => {
       const data = doc.data();
