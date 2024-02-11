@@ -12,7 +12,6 @@ import {
 import { httpsCallable } from "firebase/functions";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import DigitalCrumble from "../components/DigitalCrumble";
 import Navbar from "../components/Navbar";
 
 const IndexPage = () => {
@@ -142,7 +141,6 @@ const IndexPage = () => {
     <div className="japanese-font">
       <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-outline">
         <Navbar />
-        <DigitalCrumble />
         <div className="text-center p-8">
           <h2 className="text-3xl font-bold mt-8 mb-4">ルーム作成</h2>
           <ul
