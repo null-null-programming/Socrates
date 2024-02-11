@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+.centered-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 垂直方向の中心に配置 */
+  align-items: center; /* 水平方向の中心に配置 */
+  height: 100vh; /* 親要素の高さをビューポートの全高と同じにする */
+  text-align: center; /* テキストを中央揃えにする */
+}
+
 /* スクロールバーのトラック（背景部分） */
 ::-webkit-scrollbar {
   width: 12px; /* スクロールバーの幅 */

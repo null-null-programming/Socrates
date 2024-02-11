@@ -10,7 +10,6 @@ function WithSessionCheck({ children }) {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
-  // AuthProviderの内部でWithSessionCheckを使用
   return (
     <AuthProvider>
       <WithSessionCheck>

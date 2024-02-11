@@ -22,7 +22,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 60; // 3min
+const MAX_TIME = 300; // 5min
 const MAX_CHARACTERS = 3000;
 
 const useDisableScroll = () => {

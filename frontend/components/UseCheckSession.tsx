@@ -1,11 +1,12 @@
 import { doc, onSnapshot, runTransaction } from "@firebase/firestore";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/firebase";
 
 const useCheckSession = (userId) => {
   const [sessionId, setSessionId] = useState(null);
   const router = useRouter();
+  const confirmingLeave = useRef(false); // 確認中であるかどうかの状態を管理する
 
   useEffect(() => {
     if (!userId) return;
@@ -23,12 +24,8 @@ const useCheckSession = (userId) => {
     const sessionRef = doc(db, "sessions", sessionId);
 
     try {
-      // トランザクションを使用して複数の操作を同時に行う
       await runTransaction(db, async (transaction) => {
-        // ユーザードキュメントからsessionIdを削除
         transaction.update(userRef, { sessionId: null });
-
-        // セッションドキュメントを非アクティブに設定
         transaction.update(sessionRef, { isActive: false });
       });
 
@@ -38,18 +35,24 @@ const useCheckSession = (userId) => {
     }
   };
 
-  // ページ遷移を監視
   useEffect(() => {
     const handleRouteChange = async (url) => {
-      if (sessionId && !url.includes(`/session/${sessionId}`)) {
+      // 確認中であることをチェック
+      if (confirmingLeave.current) return;
+
+      if (
+        sessionId &&
+        router.asPath.includes(`/session/${sessionId}`) &&
+        !url.includes(`/session/${sessionId}`)
+      ) {
+        confirmingLeave.current = true; // 確認プロセスを開始
         const leaveSessionConfirmation = confirm("セッションから抜けますか？");
         if (leaveSessionConfirmation) {
-          // ユーザーが「Yes」を選択した場合、セッションをクリーンアップする処理を呼び出す
           await leaveSession(userId, sessionId);
         } else {
-          // 「No」を選択した場合、セッションページにリダイレクトする
           router.push(`/session/${sessionId}`);
         }
+        confirmingLeave.current = false; // 確認プロセスをリセット
       }
     };
 
@@ -58,7 +61,9 @@ const useCheckSession = (userId) => {
     return () => {
       router.events.off("routeChangeStart", handleRouteChange);
     };
-  }, [sessionId, router]);
+  }, [sessionId, userId, router]);
+
+  return { sessionId };
 };
 
 export default useCheckSession;

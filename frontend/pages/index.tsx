@@ -1,10 +1,10 @@
+import Link from "next/link";
 import Navbar from "../components/Navbar";
-import StartDebateButton from "../components/StartDebateButton";
 
 const IndexPage = () => {
   return (
     <div>
-      <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-outline">
+      <div className="mx-auto max-w-6xl pt-8 px-4 py-0 min-h-screen text-outline">
         <Navbar />
         <img
           src="../static/logo.png"
@@ -16,6 +16,11 @@ const IndexPage = () => {
         </p>
 
         <div className="text-center p-8">
+          <Link href="/create">
+            <b className="border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors">
+              Start Debate
+            </b>
+          </Link>
           <h2 className="text-3xl font-bold mt-8 mb-4">ゲームルール</h2>
           <ul
             className="list-disc list-inside space-y-2 mb-6 mx-auto text-xl"
@@ -25,10 +30,6 @@ const IndexPage = () => {
             <li>AIが討論を分析しスコアを算出</li>
             <li>より高いスコアのユーザーが勝利します。</li>
           </ul>
-        </div>
-
-        <div className="text-center">
-          <StartDebateButton />
         </div>
       </div>
     </div>

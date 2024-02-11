@@ -38,6 +38,12 @@ const Navbar = () => {
             <Link href="/">
               <b className="mr-4 cursor-pointer">Home</b>
             </Link>
+            <Link href="/create">
+              <b className="mr-4 cursor-pointer">Create</b>
+            </Link>
+            <Link href="/room">
+              <b className="mr-4 cursor-pointer">Room</b>
+            </Link>
             <div
               onClick={() => setIsOpen(false)}
               className="cursor-pointer pl-4"
@@ -87,6 +93,20 @@ const Navbar = () => {
               <Link href="/">
                 <b onClick={() => setIsOpen(false)} className="cursor-pointer">
                   Home
+                </b>
+              </Link>
+            </li>
+            <li>
+              <Link href="/create">
+                <b onClick={() => setIsOpen(false)} className="cursor-pointer">
+                  Create
+                </b>
+              </Link>
+            </li>
+            <li>
+              <Link href="/room">
+                <b onClick={() => setIsOpen(false)} className="cursor-pointer">
+                  Room
                 </b>
               </Link>
             </li>
