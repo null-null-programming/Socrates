@@ -27,18 +27,18 @@
 
 /* スクロールバーのハンドル（実際にドラッグする部分） */
 ::-webkit-scrollbar-thumb {
-  background: #4B5563; /* ハンドルの色 */
+  background: #0C2D57; /* ハンドルの色 */
   border-radius: 6px; /* ハンドルの角を丸くする */
 }
 
 /* スクロールバーのトラックにホバーした時のスタイル */
 ::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF; /* ホバー時のハンドルの色 */
+  background: #FC6736; /* ホバー時のハンドルの色 */
 }
 
 /* スクロールバーのトラック（背景部分）のスタイル */
 ::-webkit-scrollbar-track {
-  background: #F3F4F6; /* トラックの色 */
+  background: #EFECEC; /* トラックの色 */
   border-radius: 6px; /* トラックの角を丸くする */
 }
 

@@ -22,7 +22,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 300; // 5min
+const MAX_TIME = 3000; // 5min
 const MAX_CHARACTERS = 1000;
 
 const useDisableScroll = () => {
@@ -212,13 +212,13 @@ const Debate = ({ sessionId }) => {
   const renderTabSwitch = () => (
     <div className="flex md:hidden justify-around p-4">
       <button
-        className={`flex-1 ${activeTab === "debate" ? "bg-red-900" : ""} p-2`}
+        className={`flex-1 ${activeTab === "debate" ? "bg-[#08D9D6]" : ""} p-2`}
         onClick={() => setActiveTab("debate")}
       >
         Debate
       </button>
       <button
-        className={`flex-1 ${activeTab === "chat" ? "bg-green-900" : ""} p-2`}
+        className={`flex-1 ${activeTab === "chat" ? "bg-[#FF2E63]" : ""} p-2`}
         onClick={() => setActiveTab("chat")}
       >
         Chat
@@ -246,7 +246,16 @@ const Debate = ({ sessionId }) => {
                     .map((item) => (
                       <div key={item.id}>
                         <p>{item.senderName}</p>
-                        <pre className="p-2 bg-gray-700 rounded my-2 text-white whitespace-pre-wrap">
+                        <pre
+                          className={`
+                                    p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825]
+                                    ${
+                                      item.senderId === user?.id
+                                        ? "border border-[#08D9D6]"
+                                        : "border border-[#FF2E63]"
+                                    }
+                                  `}
+                        >
                           {item.text}
                         </pre>
                       </div>
@@ -273,14 +282,14 @@ const Debate = ({ sessionId }) => {
           {(activeTab === "debate" || window.innerWidth >= 768) && (
             <div className="w-full md:w-1/2 p-3">
               <textarea
-                className="border bg-[#191825] border-[#F0E3E3] p-4 text-white w-full"
+                className="border bg-[#191825] border-[#08D9D6] p-4 text-white w-full"
                 style={{ height: `${window.innerHeight / 7}px` }}
                 placeholder="Your debate message"
                 value={debateMessage}
                 onChange={(e) => setDebateMessage(e.target.value)}
               ></textarea>
               <button
-                className="mt-4 px-6 py-3 border border-[#FF6969] text-white font-bold rounded-lg shadow-lg hover:bg-[#FF6969] transition duration-300 ease-in-out"
+                className="mt-4 px-6 py-3 border border-[#08D9D6] text-white font-bold rounded-lg shadow-lg hover:bg-[#08D9D6] transition duration-300 ease-in-out"
                 onClick={() => sendMessage(true)}
               >
                 Send Debate
