@@ -7,6 +7,10 @@
   font-family: 'Honk', system-ui;
 }
 
+.japanese-font {
+  font-family: 'DotGothic16', sans-serif;
+}
+
 .centered-container {
   display: flex;
   flex-direction: column;

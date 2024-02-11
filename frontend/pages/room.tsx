@@ -55,10 +55,10 @@ const WaitingRoomsPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-outline">
+    <div className="japanese-font mx-auto max-w-6xl pt-8 px-4 min-h-screen text-outline">
       <Navbar />
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold mb-4">待機中のルーム一覧</h2>
+      <div className="space-y-4 mx-auto max-w-6xl pt-8 px-4 py-0 min-h-screen text-outline">
+        <h2 className="text-2xl font-semibold mb-4 my-9">ルーム一覧</h2>
         {waitingRooms.length > 0 ? (
           waitingRooms.map((room) => (
             <button

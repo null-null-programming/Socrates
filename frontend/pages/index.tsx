@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar";
 
 const IndexPage = () => {
   return (
-    <div>
+    <div className="japanese-font">
       <div className="mx-auto max-w-6xl pt-8 px-4 py-0 min-h-screen text-outline">
         <Navbar />
         <img
@@ -12,22 +12,23 @@ const IndexPage = () => {
           className="mx-auto mb-6"
         />
         <p className="text-2xl font-bold text-center">
-          Socratesは、LLMを活用した一対一のディベートバトルアプリです。
+          Socratesは、AIを活用した
+          <br />
+          1対1のディベートバトルアプリ
         </p>
 
         <div className="text-center p-8">
           <Link href="/create">
-            <b className="border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors">
+            <b className=" apply-font  text-3xl border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors">
               Start Debate
             </b>
           </Link>
-          <h2 className="text-3xl font-bold mt-8 mb-4">ゲームルール</h2>
+          <h2 className="text-3xl font-bold mt-8 mb-4">ルール</h2>
           <ul
             className="list-disc list-inside space-y-2 mb-6 mx-auto text-xl"
             style={{ maxWidth: "800px" }}
           >
-            <li>ランダムに選択されたトピックに基づいて討論</li>
-            <li>AIが討論を分析しスコアを算出</li>
+            <li>トピックに基づいて討論</li>
             <li>より高いスコアのユーザーが勝利します。</li>
           </ul>
         </div>

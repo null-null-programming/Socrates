@@ -12,6 +12,7 @@ import {
 import { httpsCallable } from "firebase/functions";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import DigitalCrumble from "../components/DigitalCrumble";
 import Navbar from "../components/Navbar";
 
 const IndexPage = () => {
@@ -138,9 +139,10 @@ const IndexPage = () => {
   };
 
   return (
-    <div>
+    <div className="japanese-font">
       <div className="mx-auto max-w-6xl pt-8 px-4 min-h-screen text-outline">
         <Navbar />
+        <DigitalCrumble />
         <div className="text-center p-8">
           <h2 className="text-3xl font-bold mt-8 mb-4">ルーム作成</h2>
           <ul
@@ -166,7 +168,7 @@ const IndexPage = () => {
             </div>
             <div className="p-5">
               <button
-                className="border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors"
+                className="apply-font text-4xl border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors"
                 onClick={handleCreateSession}
                 disabled={isLoading || !topic.trim()}
               >

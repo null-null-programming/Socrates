@@ -25,7 +25,7 @@ const Navbar = () => {
       <div className="page-background"></div>
       <nav className="px-5 py-0text-[#F0E3E3]">
         <div className="flex justify-between items-center">
-          <Link href="/">
+          <Link href="/" scroll={false}>
             <b className="font-semibold text-6xl cursor-pointer">Socrates</b>
           </Link>
           <button
@@ -35,16 +35,16 @@ const Navbar = () => {
             ☰
           </button>
           <div className="hidden md:flex text-5xl">
-            <Link href="/">
+            <Link href="/" scroll={false}>
               <b className="mr-4 cursor-pointer">Home</b>
             </Link>
             {user && (
-              <Link href="/create">
+              <Link href="/create" scroll={false}>
                 <b className="mr-4 cursor-pointer">Create</b>
               </Link>
             )}
             {user && (
-              <Link href="/room">
+              <Link href="/room" scroll={false}>
                 <b className="mr-4 cursor-pointer">Room</b>
               </Link>
             )}
@@ -94,7 +94,7 @@ const Navbar = () => {
             } transition-transform duration-500 ease-in-out`}
           >
             <li>
-              <Link href="/">
+              <Link href="/" scroll={false}>
                 <b
                   onClick={() => setIsOpen(false)}
                   className="cursor-pointer text-7xl"
@@ -105,7 +105,7 @@ const Navbar = () => {
             </li>
             {user && (
               <li>
-                <Link href="/create">
+                <Link href="/create" scroll={false}>
                   <b
                     onClick={() => setIsOpen(false)}
                     className="cursor-pointer text-7xl"
@@ -117,7 +117,7 @@ const Navbar = () => {
             )}
             {user && (
               <li>
-                <Link href="/room">
+                <Link href="/room" scroll={false}>
                   <b
                     onClick={() => setIsOpen(false)}
                     className="cursor-pointer text-7xl"
