@@ -14,7 +14,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 
-const IndexPage = () => {
+const Create = () => {
   const [textareaHeight, setTextareaHeight] = useState("100px");
   const [isLoading, setIsLoading] = useState(false);
   const [topic, setTopic] = useState("");
@@ -165,4 +165,4 @@ const IndexPage = () => {
   );
 };
 
-export default IndexPage;
+export default Create;

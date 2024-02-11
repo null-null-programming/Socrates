@@ -34,7 +34,7 @@ const Navbar = () => {
           >
             ☰
           </button>
-          <div className="hidden md:flex text-5xl">
+          <div className="hidden md:flex text-4xl">
             <Link href="/" scroll={false}>
               <b className="mr-4 cursor-pointer">Home</b>
             </Link>
@@ -46,6 +46,16 @@ const Navbar = () => {
             {user && (
               <Link href="/room" scroll={false}>
                 <b className="mr-4 cursor-pointer">Room</b>
+              </Link>
+            )}
+            {user && (
+              <Link href="/ranking" scroll={false}>
+                <b className="mr-4 cursor-pointer">Ranking</b>
+              </Link>
+            )}
+            {user && (
+              <Link href="/profile" scroll={false}>
+                <b className="mr-4 cursor-pointer">Profile</b>
               </Link>
             )}
             <div
@@ -123,6 +133,30 @@ const Navbar = () => {
                     className="cursor-pointer text-7xl"
                   >
                     Room
+                  </b>
+                </Link>
+              </li>
+            )}
+            {user && (
+              <li>
+                <Link href="/ranking" scroll={false}>
+                  <b
+                    onClick={() => setIsOpen(false)}
+                    className="cursor-pointer text-7xl"
+                  >
+                    Ranking
+                  </b>
+                </Link>
+              </li>
+            )}
+            {user && (
+              <li>
+                <Link href="/profile" scroll={false}>
+                  <b
+                    onClick={() => setIsOpen(false)}
+                    className="cursor-pointer text-7xl"
+                  >
+                    Profile
                   </b>
                 </Link>
               </li>
