@@ -9,19 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Change directory to frontend
-        run: cd frontend
-
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
           node-version: "21" # このバージョン指定は見直す必要があります
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          cd frontend
+          npm install
 
       - name: Build and Export Next.js app
         run: |
+          cd frontend
           npm run build
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
