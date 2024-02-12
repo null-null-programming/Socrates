@@ -15,6 +15,7 @@ import {
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import fetchUserData from "../lib/fetchUserInfo";
+import useFetchOpponentUid from "./useFetchOpponentUid";
 
 // ChatItem インターフェイスはそのままに保持
 interface ChatItem {
@@ -26,7 +27,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 3000; // 5min
+const MAX_TIME = 100; // 5min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -56,13 +57,15 @@ const Debate = ({ sessionId }) => {
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
   const [remainingTime, setRemainingTime] = useState(MAX_TIME);
   const [userData, setUserData] = useState(null);
-  const user = useAuth();
+  const { user, token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const [userRemainingCharacters, setUserRemainingCharacters] =
     useState(MAX_CHARACTERS);
 
   if (!user) return;
+
+  const opponentUid = useFetchOpponentUid(sessionId, user?.id);
 
   const router = useRouter();
 
@@ -139,6 +142,61 @@ const Debate = ({ sessionId }) => {
   }, [chatHistory, debateMessage]);
 
   useEffect(() => {
+    let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
+
+    if (user) {
+      const userDocRef = doc(db, "users", user.id);
+      unsubscribe = onSnapshot(userDocRef, async (doc) => {
+        if (doc.exists()) {
+          const updatedUserData = doc.data();
+          // レートの変更があった場合（初期状態の監視も含む）
+          if (
+            userData &&
+            updatedUserData &&
+            updatedUserData.rate !== userData.rate
+          ) {
+            // レート変更の通知メッセージを作成
+            let rateChangeText = `${userData.user_name} : `;
+
+            if (userData.rate < updatedUserData.rate) {
+              rateChangeText += "WIN\n";
+            } else if (userData.rate == updatedUserData.rate) {
+              rateChangeText += "DRAW\n";
+            } else {
+              rateChangeText += "LOSE\n";
+            }
+
+            rateChangeText += `Rating update: ${userData.rate} -> ${updatedUserData.rate}`;
+
+            // メッセージをsessionsのdebateコレクションに追加
+            const messageItem = {
+              senderId: "system",
+              senderName: "system",
+              isChat: true,
+              text: rateChangeText,
+              timestamp: serverTimestamp(),
+            };
+
+            try {
+              await addDoc(
+                collection(db, "sessions", sessionId, "debate"),
+                messageItem
+              );
+            } catch (error) {
+              console.error(
+                "Failed to add rate change message to the debate history",
+                error
+              );
+            }
+          }
+        }
+      });
+    }
+
+    return () => unsubscribe(); // コンポーネントのクリーンアップ時にリスナーを解除
+  }, [user, userData, sessionId]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setRemainingTime((prevTime) => {
         if (prevTime > 0) {
@@ -175,7 +233,7 @@ const Debate = ({ sessionId }) => {
   }, [sessionId]);
 
   const analyzeAndSaveEvaluationResult = async (json) => {
-    const data = json["eval"];
+    const data = json["result"];
 
     const EvalHistory = [];
     let text = "";
@@ -189,14 +247,18 @@ const Debate = ({ sessionId }) => {
           text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
         }
       }
+
+      EvalHistory.push({
+        senderId: "system",
+        senderName: "system",
+        isChat: true,
+        text: text,
+        timestamp: serverTimestamp(),
+      });
+
+      text = "";
     }
-    EvalHistory.push({
-      senderId: "system",
-      senderName: "system",
-      isChat: true,
-      text: text,
-      timestamp: serverTimestamp(),
-    });
+
     // Firestoreデータベースに結果を保存
     const promises = EvalHistory.map((item) =>
       addDoc(collection(db, "sessions", sessionId, "debate"), item)
@@ -214,14 +276,18 @@ const Debate = ({ sessionId }) => {
       .join("");
 
     let url = `http://localhost:8000/session/${sessionId}/eval`;
-
     try {
       const res = await fetch(url, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ debate: debateString }),
+        body: JSON.stringify({
+          debate: debateString,
+          my_debater_name: userData.user_name,
+          opponent_uid: opponentUid,
+        }),
       });
 
       if (!res.ok) {
@@ -244,8 +310,6 @@ const Debate = ({ sessionId }) => {
         .pop();
 
       const hasEnded = chatHistory.filter((item) => item.isChat).pop();
-
-      console.log(hasEnded);
 
       if (!lastDebateMessage) {
         router.push("/");
@@ -295,7 +359,7 @@ const Debate = ({ sessionId }) => {
 
   // レスポンシブなタブUIのレンダリング
   const renderTabSwitch = () => (
-    <div className="flex md:hidden justify-around p-4">
+    <div className="flex md:hidden justify-around p-4 apply-font text-4xl">
       <button
         className={`flex-1 ${activeTab === "debate" ? "bg-[#08D9D6]" : ""} p-2`}
         onClick={() => setActiveTab("debate")}
@@ -306,7 +370,7 @@ const Debate = ({ sessionId }) => {
         className={`flex-1 ${activeTab === "chat" ? "bg-[#FF2E63]" : ""} p-2`}
         onClick={() => setActiveTab("chat")}
       >
-        Chat
+        Info
       </button>
     </div>
   );
@@ -324,7 +388,7 @@ const Debate = ({ sessionId }) => {
                 className="w-full md:w-1/2 overflow-auto"
                 style={{ height: `${window.innerHeight / 2}px` }}
               >
-                <h2 className="text-5xl apply-font">Debate Messages</h2>
+                <h2 className="text-5xl apply-font">Messages</h2>
                 <div className="h-full">
                   {chatHistory
                     .filter((item) => !item.isChat)
@@ -373,16 +437,20 @@ const Debate = ({ sessionId }) => {
                         </p>
                       </>
                     )}
-                    {chatHistory
-                      .filter((item) => item.isChat)
-                      .map((item) => (
-                        <div key={item.id}>
-                          <h1 className="text-8xl apply-font">RESULT</h1>
-                          <pre className="p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825] border border-[#EBF400]">
-                            {item.text}
-                          </pre>
-                        </div>
-                      ))}
+                    {remainingTime === 0 && (
+                      <div>
+                        <h1 className="text-5xl apply-font">RESULT</h1>
+                        {chatHistory
+                          .filter((item) => item.isChat)
+                          .map((item) => (
+                            <div key={item.id} className="p-2">
+                              <pre className="p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825] border border-[#EBF400]">
+                                {item.text}
+                              </pre>
+                            </div>
+                          ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

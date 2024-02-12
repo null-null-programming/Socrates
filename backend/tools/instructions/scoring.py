@@ -36,7 +36,6 @@ scoring_instructions = """
 
 {
   "eval":{
-    "round":,
     "{first_debator_name}": {
       "スタンスの適切さ": {
         "得点": 1,

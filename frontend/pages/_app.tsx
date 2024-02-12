@@ -10,7 +10,7 @@ import { analytics } from "../lib/firebase";
 import "../styles/global.css";
 
 function WithSessionCheck({ children }) {
-  const user = useAuth(); // AuthProvider内部でuseAuthを使用
+  const { user } = useAuth(); // AuthProvider内部でuseAuthを使用
   useCheckSession(user?.id);
   return <>{children}</>; // 子コンポーネントをそのまま表示
 }

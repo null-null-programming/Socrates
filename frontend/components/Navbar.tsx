@@ -5,7 +5,7 @@ import { useState } from "react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const user = useAuth();
+  const { user } = useAuth();
   const [waiting, setWaiting] = useState<boolean>(false);
 
   const signIn = () => {

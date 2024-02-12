@@ -1,7 +1,6 @@
 import { auth, db } from "@/lib/firebase";
-import { User } from "@/types/user";
 import { doc, getDoc, setDoc } from "@firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { User as FirebaseUser, onAuthStateChanged } from "firebase/auth";
 import {
   ReactNode,
   createContext,
@@ -10,42 +9,65 @@ import {
   useState,
 } from "react";
 
-type UserContextType = User | null | undefined;
+interface AppUser {
+  id: string;
+  name: string | null;
+}
 
-const AuthContext = createContext<UserContextType>(undefined);
+interface AuthContextType {
+  user: AppUser | null;
+  token: string | null;
+}
+
+const AuthContext = createContext<AuthContextType>({ user: null, token: null });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<UserContextType>();
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const ref = doc(db, `users/${firebaseUser.uid}`);
-        const snap = await getDoc(ref);
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+          try {
+            const token = await firebaseUser.getIdToken();
+            setToken(token);
+          } catch (error) {
+            console.error("トークンの取得に失敗しました", error);
+            setToken(null);
+          }
 
-        if (snap.exists()) {
-          const appUser = (await getDoc(ref)).data() as User;
-          setUser(appUser);
-        } else {
-          const appUser: User = {
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName!,
-          };
+          const userRef = doc(db, `users/${firebaseUser.uid}`);
+          const snap = await getDoc(userRef);
 
-          setDoc(ref, appUser).then(() => {
+          if (snap.exists()) {
+            const appUser = snap.data() as AppUser;
             setUser(appUser);
-          });
-        }
-      } else {
-        console.log("fail to get user");
-        setUser(null);
-      }
+          } else {
+            const newUser: AppUser = {
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName,
+            };
 
-      return unsubscribe;
-    });
+            await setDoc(userRef, newUser);
+            setUser(newUser);
+          }
+        } else {
+          setUser(null);
+          setToken(null);
+        }
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
 
-  return <AuthContext.Provider value={user}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, token }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => useContext(AuthContext);

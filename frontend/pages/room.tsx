@@ -10,7 +10,7 @@ const WaitingRoomsPage = () => {
   const [waitingRooms, setWaitingRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const user = useAuth();
+  const { user } = useAuth();
 
   if (!user) {
     alert("ログインしてください。");

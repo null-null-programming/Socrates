@@ -20,7 +20,7 @@ const Create = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [topic, setTopic] = useState("");
   const router = useRouter();
-  const user = useAuth();
+  const { user, token } = useAuth();
   const userId = user?.id;
 
   useEffect(() => {

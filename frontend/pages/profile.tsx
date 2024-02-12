@@ -15,7 +15,7 @@ const Profile = () => {
   const [name, setName] = useState("");
   const [imgFile, setImgFile] = useState(null);
   const [imgUrl, setImgUrl] = useState(""); // 画像URLを表示するためのstate
-  const user = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
