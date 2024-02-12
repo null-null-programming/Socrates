@@ -5,6 +5,7 @@ import {
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
@@ -80,13 +81,9 @@ const Profile = () => {
       <div className="mx-auto max-w-6xl pt-8 px-4 py-0 min-h-screen text-outline">
         <Navbar />
         <div className="profile-container">
-          <img
-            src={imgUrl}
-            alt="Profile Image"
-            height={300}
-            width={300}
-            className="rounded-full mx-auto"
-          />
+          <div className="rounded-full mx-auto">
+            <Image src={imgUrl} alt="Profile Image" width={300} height={300} />
+          </div>
           <div className="">
             <input
               type="file"

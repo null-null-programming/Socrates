@@ -12,8 +12,9 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
+import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import fetchUserData from "../lib/fetchUserInfo";
 import useCheckMyPosition from "./useCheckMyPosition";
 import useFetchOpponentUid from "./useFetchOpponentUid";
@@ -113,7 +114,7 @@ const Debate = ({ sessionId }) => {
     }
   }, [user]);
 
-  const updateRemainingCharacters = () => {
+  const updateRemainingCharacters = useCallback(() => {
     let userTotalCharacters = 0;
     let lastUserTimestamp = null;
 
@@ -127,7 +128,7 @@ const Debate = ({ sessionId }) => {
 
     const userRemaining = MAX_CHARACTERS - userTotalCharacters;
     setUserRemainingCharacters(userRemaining > 0 ? userRemaining : 0);
-  };
+  }, [chatHistory, user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -174,7 +175,7 @@ const Debate = ({ sessionId }) => {
   useEffect(() => {
     if (!user) return;
     updateRemainingCharacters();
-  }, [chatHistory, debateMessage, user]);
+  }, [chatHistory, debateMessage, user, updateRemainingCharacters]);
 
   useEffect(() => {
     let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
@@ -269,45 +270,48 @@ const Debate = ({ sessionId }) => {
     return () => unsubscribe();
   }, [sessionId, user]);
 
-  const analyzeAndSaveEvaluationResult = async (json) => {
-    const data = json["result"];
+  const analyzeAndSaveEvaluationResult = useCallback(
+    async (json) => {
+      const data = json["result"];
 
-    let EvalHistory: any = [];
-    let text = "";
-    for (const [userName, scores] of Object.entries(data)) {
-      if (userName === "round") continue;
-      text += `UserName: ${userName}\n\n`;
-      if (scores) {
-        for (const [category, details] of Object.entries(scores)) {
-          if (category === "得点") {
-            text += `${category}\n合計 ${details["合計"]}\n`;
-          } else {
-            text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
+      let EvalHistory: any = [];
+      let text = "";
+      for (const [userName, scores] of Object.entries(data)) {
+        if (userName === "round") continue;
+        text += `UserName: ${userName}\n\n`;
+        if (scores) {
+          for (const [category, details] of Object.entries(scores)) {
+            if (category === "得点") {
+              text += `${category}\n合計 ${details["合計"]}\n`;
+            } else {
+              text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
+            }
           }
+          EvalHistory.push({
+            senderId: "system",
+            senderName: "system",
+            senderImgUrl: null,
+            isChat: true,
+            text: text,
+            isProponent: null,
+            timestamp: serverTimestamp(),
+          });
+          text = "";
         }
-        EvalHistory.push({
-          senderId: "system",
-          senderName: "system",
-          senderImgUrl: null,
-          isChat: true,
-          text: text,
-          isProponent: null,
-          timestamp: serverTimestamp(),
-        });
-        text = "";
       }
-    }
 
-    // Firestoreデータベースに結果を保存
-    const promises = EvalHistory.map((item) =>
-      addDoc(collection(db, "sessions", sessionId, "debate"), item)
-    );
-    await Promise.all(promises);
+      // Firestoreデータベースに結果を保存
+      const promises = EvalHistory.map((item) =>
+        addDoc(collection(db, "sessions", sessionId, "debate"), item)
+      );
+      await Promise.all(promises);
 
-    //debateMessage.push({ senderName: "system", text: text });
-  };
+      //debateMessage.push({ senderName: "system", text: text });
+    },
+    [sessionId]
+  );
 
-  const evaluateDebate = async () => {
+  const evaluateDebate = useCallback(async () => {
     // 現在のディベートメッセージの状態を取得
     const debateMessages = chatHistory.filter((item) => !item.isChat);
     const debateString = debateMessages
@@ -345,7 +349,14 @@ const Debate = ({ sessionId }) => {
     } catch (error) {
       console.error("Evaluation failed:", error);
     }
-  };
+  }, [
+    analyzeAndSaveEvaluationResult,
+    chatHistory,
+    opponentUid,
+    sessionId,
+    token,
+    userData.user_name,
+  ]);
 
   useEffect(() => {
     if (!user) return;
@@ -371,7 +382,7 @@ const Debate = ({ sessionId }) => {
         evaluateDebate();
       }
     }
-  }, [remainingTime, user]);
+  }, [remainingTime, user, chatHistory, evaluateDebate, router]);
 
   const sendMessage = async (isDebateMessage: boolean) => {
     // ログインチェック
@@ -441,7 +452,12 @@ const Debate = ({ sessionId }) => {
                     .map((item) => (
                       <div key={item.id} className="py-3">
                         <div className="flex item-center">
-                          <img src={item.senderImgUrl} className="w-16"></img>
+                          <Image
+                            src={item.senderImgUrl}
+                            alt="sender image"
+                            width={100}
+                            height={100}
+                          />
                           <h1 className="p-6">{item.senderName}</h1>
                         </div>
                         <pre

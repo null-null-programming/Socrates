@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 
@@ -6,11 +7,14 @@ const IndexPage = () => {
     <div className="japanese-font">
       <div className="mx-auto max-w-6xl pt-8 px-4 py-0 min-h-screen text-outline">
         <Navbar />
-        <img
-          src="../static/logo.png"
-          alt="Socrates Logo"
-          className="mx-auto mb-6"
-        />
+        <div className="flex justify-center">
+          <Image
+            src="/static/logo.png"
+            alt="Socrates Logo"
+            width={500}
+            height={500}
+          />
+        </div>
         <p className="text-2xl font-bold text-center">
           Socratesは、AIを活用した
           <br />

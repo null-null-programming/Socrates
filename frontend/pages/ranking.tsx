@@ -6,6 +6,7 @@ import {
   query,
   startAfter,
 } from "firebase/firestore";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 
@@ -62,14 +63,16 @@ const Ranking = () => {
         <div className="ranking-list py-8">
           {users.map((user, index) => (
             <div key={user.id} className="user-info flex p-2 text-xl">
-              <img
+              <Image
                 src={
                   user.img_url ||
                   "https://firebasestorage.googleapis.com/v0/b/socrates-413218.appspot.com/o/util%2Fanonymous.png?alt=media&token=b433ffba-46b8-47cb-8699-6c2780814c34"
                 }
-                alt="User"
-                className="w-32"
+                alt="User Image"
+                width={150}
+                height={150}
               />
+
               <p className="px-2 py-9">
                 {index + 1}. {user.name} - Rate: {user.rate}
               </p>
