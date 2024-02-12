@@ -50,8 +50,6 @@ const WaitingRoomsPage = () => {
       console.error("ルームの参加に失敗しました:", error);
       alert("ルームに参加できませんでした。");
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -75,6 +73,11 @@ const WaitingRoomsPage = () => {
           <p>待機中のルームはありません。</p>
         )}
       </div>
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        </div>
+      )}
     </div>
   );
 };
