@@ -1,22 +1,32 @@
-const path = require('path');
-
 /**
  * @type {import('next').NextConfig}
  */
+const path = require('path');
+
+
 const nextConfig = {
-  images: {
-    domains: ['firebasestorage.googleapis.com'],
-  },
+    output: 'export',
+    images: {
+      domains: ['firebasestorage.googleapis.com'],
+      unoptimized: true, 
+    },
+   
+    // Optional: Change links `/me` -> `/me/` and emit `/me.html` -> `/me/index.html`
+    // trailingSlash: true,
+   
+    // Optional: Prevent automatic `/me` -> `/me/`, instead preserve `href`
+    // skipTrailingSlashRedirect: true,
+   
+    // Optional: Change the output directory `out` -> `dist`
 
-  // Optional: Uncomment if needed
-  // trailingSlash: true,
-  // skipTrailingSlashRedirect: true,
-  // distDir: '.next',
 
-  webpack: (config) => {
-    config.resolve.alias['@'] = path.resolve(__dirname);
-    return config;
-  },
-};
 
-module.exports = nextConfig;
+    webpack: (config) => {
+      config.resolve.alias['@'] = path.resolve(__dirname);
+      return config;
+    },
+  
+    distDir: 'out',
+  }
+   
+  module.exports = nextConfig
