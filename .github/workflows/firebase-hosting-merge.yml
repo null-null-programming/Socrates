@@ -16,13 +16,11 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd frontend
           npm install
         working-directory: frontend
 
       - name: Build and Export Next.js app
         run: |
-          cd frontend
           npm run build
         working-directory: frontend
 
