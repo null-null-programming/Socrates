@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "@/context/auth";
 import { logEvent } from "firebase/analytics";
 import { AnimatePresence, motion } from "framer-motion";
 import type { AppProps } from "next/app";
+import Head from "next/head";
 import Router, { useRouter } from "next/router";
 import { useEffect } from "react";
 import { analytics } from "../lib/firebase";
@@ -50,14 +51,19 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <AnimatePresence>
-      <AuthProvider>
-        <WithSessionCheck>
-          <PageTransition key={router.route}>
-            <Component {...pageProps} />
-          </PageTransition>
-        </WithSessionCheck>
-      </AuthProvider>
-    </AnimatePresence>
+    <>
+      <Head>
+        <link rel="icon" href="/logo.png" />
+      </Head>
+      <AnimatePresence>
+        <AuthProvider>
+          <WithSessionCheck>
+            <PageTransition key={router.route}>
+              <Component {...pageProps} />
+            </PageTransition>
+          </WithSessionCheck>
+        </AuthProvider>
+      </AnimatePresence>
+    </>
   );
 }
