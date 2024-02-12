@@ -214,3 +214,5 @@ dist/**/*
 yarn.lock
 
 **/keys/*
+.firebase/*
+.firebase
