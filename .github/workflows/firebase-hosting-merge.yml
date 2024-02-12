@@ -18,11 +18,13 @@ jobs:
         run: |
           cd frontend
           npm install
+        working-directory: frontend
 
       - name: Build and Export Next.js app
         run: |
           cd frontend
           npm run build
+        working-directory: frontend
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
