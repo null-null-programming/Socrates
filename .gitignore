@@ -216,3 +216,4 @@ yarn.lock
 **/keys/*
 .firebase/*
 .firebase
+/functions/out/*
