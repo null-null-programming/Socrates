@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import fetchUserData from "../lib/fetchUserInfo";
 
 // ChatItem インターフェイスはそのままに保持
 interface ChatItem {
@@ -25,8 +26,8 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 30; // 5min
-const MAX_CHARACTERS = 1000;
+const MAX_TIME = 3000; // 5min
+const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -54,13 +55,28 @@ const Debate = ({ sessionId }) => {
   const [chatMessage, setChatMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
   const [remainingTime, setRemainingTime] = useState(MAX_TIME);
+  const [userData, setUserData] = useState(null);
   const user = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const [userRemainingCharacters, setUserRemainingCharacters] =
     useState(MAX_CHARACTERS);
 
+  if (!user) return;
+
   const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      // user.idが利用可能な場合のみfetchUserDataを呼び出す
+      const fetchAndSetUserData = async () => {
+        const fetchedUserData = await fetchUserData(user.id);
+        setUserData(fetchedUserData);
+      };
+
+      fetchAndSetUserData();
+    }
+  }, [user]);
 
   const updateRemainingCharacters = () => {
     let userTotalCharacters = 0;
@@ -262,7 +278,10 @@ const Debate = ({ sessionId }) => {
       await addDoc(collection(db, "sessions", sessionId, "debate"), {
         text: message,
         senderId: user.id,
-        senderName: user.name || "匿名",
+        senderName: userData.user_name || "Anonymous",
+        senderImgUrl:
+          userData.imgUrl ||
+          "https://firebasestorage.googleapis.com/v0/b/socrates-413218.appspot.com/o/util%2Fanonymous.png?alt=media&token=b433ffba-46b8-47cb-8699-6c2780814c34",
         isChat: false,
         timestamp: serverTimestamp(),
       });
@@ -310,8 +329,11 @@ const Debate = ({ sessionId }) => {
                   {chatHistory
                     .filter((item) => !item.isChat)
                     .map((item) => (
-                      <div key={item.id}>
-                        <p>{item.senderName}</p>
+                      <div key={item.id} className="py-3">
+                        <div className="flex item-center">
+                          <img src={item.senderImgUrl} className="w-16"></img>
+                          <h1 className="p-6">{item.senderName}</h1>
+                        </div>
                         <pre
                           className={`
                                     p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825]

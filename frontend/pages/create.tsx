@@ -13,6 +13,7 @@ import { httpsCallable } from "firebase/functions";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import fetchUserData from "../lib/fetchUserInfo";
 
 const Create = () => {
   const [textareaHeight, setTextareaHeight] = useState("100px");
@@ -90,9 +91,15 @@ const Create = () => {
         return;
       }
 
+      const userData = await fetchUserData(userId);
+      const user_name = userData.user_name;
+
       // Firebase Function の呼び出し
       const enqueueUserFc = httpsCallable(functions, "enqueueUser");
-      const result = await enqueueUserFc({ topic });
+      const result = await enqueueUserFc({
+        topic: topic,
+        userName: user_name,
+      });
 
       if (result.data.status === "waiting") {
         setIsLoading(true);

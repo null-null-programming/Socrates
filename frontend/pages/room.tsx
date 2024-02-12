@@ -68,6 +68,7 @@ const WaitingRoomsPage = () => {
               disabled={isLoading}
             >
               <h2 className="text-xl font-bold">{room.topic}</h2>
+              <h2 className="text-xl font-bold">{room.userName}</h2>
             </button>
           ))
         ) : (

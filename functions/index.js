@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
 const { v4: uuidv4 } = require('uuid');
+const { user } = require('firebase-functions/v1/auth');
 
 exports.enqueueUser = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -10,6 +11,7 @@ exports.enqueueUser = functions.https.onCall(async (data, context) => {
 
   const db = admin.firestore();
   const userId = context.auth.uid;
+  const userName = data.userName;
   const topic = data.topic;
   const roomId = data.roomId || null;  // クライアントから提供されるルームID
 
@@ -31,7 +33,7 @@ exports.enqueueUser = functions.https.onCall(async (data, context) => {
       }
     } else {
       // 通常のマッチングプロセス
-      return await matchWithWaitingUser(transaction, db, userId, topic);
+      return await matchWithWaitingUser(transaction, db, userId, topic,userName);
     }
   });
 
@@ -46,7 +48,7 @@ exports.enqueueUser = functions.https.onCall(async (data, context) => {
 });
 
 // 他ユーザーとのマッチングロジック
-async function matchWithWaitingUser(transaction, db, userId, topic) {
+async function matchWithWaitingUser(transaction, db, userId, topic,userName) {
   const waitingListRef = db.collection('waiting_list').where('topic', '==', topic).limit(1);
   const snapshot = await transaction.get(waitingListRef);
 
@@ -62,6 +64,7 @@ async function matchWithWaitingUser(transaction, db, userId, topic) {
     const myRoomId = uuidv4();
     transaction.set(db.collection('waiting_list').doc(myRoomId), {
       userId: userId,
+      userName: userName,
       topic: topic,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });

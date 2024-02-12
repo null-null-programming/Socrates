@@ -31,7 +31,7 @@ const Profile = () => {
     const fetchUserData = async () => {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setName(docSnap.data().name); // ユーザー名を取得して設定
+        setName(docSnap.data().user_name); // ユーザー名を取得して設定
         // Firestoreから画像URLを取得して設定。ドキュメントにimg_urlがない場合はデフォルトの画像を使用
         const storedImgUrl =
           docSnap.data().img_url ||
@@ -57,20 +57,22 @@ const Profile = () => {
       const uploadTask = uploadBytesResumable(storageRef, imgFile);
       await uploadTask;
       imgUrl = await getDownloadURL(storageRef);
-    } else {
-      // 画像ファイルがない場合、デフォルト画像(/util/anonymous.png)のURLを設定
-      const storage = getStorage();
-      const defaultImgRef = ref(storage, "util/anonymous.png");
-      imgUrl = await getDownloadURL(defaultImgRef);
     }
 
-    console.log(imgUrl);
-
     // Firestoreに名前と画像URLを更新
-    await updateDoc(userRef, {
-      name: name,
-      img_url: imgUrl,
-    });
+
+    if (imgUrl) {
+      await updateDoc(userRef, {
+        user_name: name,
+        img_url: imgUrl,
+      });
+    } else {
+      await updateDoc(userRef, {
+        user_name: name,
+      });
+    }
+
+    alert("プロフィールを更新しました。");
   };
 
   return (
@@ -78,7 +80,6 @@ const Profile = () => {
       <div className="mx-auto max-w-6xl pt-8 px-4 py-0 min-h-screen text-outline">
         <Navbar />
         <div className="profile-container">
-          <h1 className="japanese-font text-6xl py-2">Profile</h1>
           <img
             src={imgUrl}
             alt="Profile Image"
