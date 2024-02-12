@@ -15,6 +15,7 @@ import {
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import fetchUserData from "../lib/fetchUserInfo";
+import useCheckMyPosition from "./useCheckMyPosition";
 import useFetchOpponentUid from "./useFetchOpponentUid";
 
 // ChatItem インターフェイスはそのままに保持
@@ -27,7 +28,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 100; // 5min
+const MAX_TIME = 300; // 5min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -59,15 +60,38 @@ const Debate = ({ sessionId }) => {
   const [userData, setUserData] = useState(null);
   const { user, token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [topic, setTopic] = useState(null);
 
   const [userRemainingCharacters, setUserRemainingCharacters] =
     useState(MAX_CHARACTERS);
 
   if (!user) return;
 
+  const isProponent = useCheckMyPosition(sessionId, user?.id);
   const opponentUid = useFetchOpponentUid(sessionId, user?.id);
 
   const router = useRouter();
+
+  useEffect(() => {
+    const getTopicBySessionId = async () => {
+      const sessionRef = doc(db, "sessions", sessionId);
+
+      try {
+        const sessionSnap = await getDoc(sessionRef);
+
+        if (sessionSnap.exists()) {
+          const topic = sessionSnap.data().topic;
+          setTopic(topic);
+        } else {
+          console.log("No such session!");
+        }
+      } catch (error) {
+        console.error("Error getting session topic:", error);
+      }
+    };
+
+    getTopicBySessionId();
+  }, [sessionId]);
 
   useEffect(() => {
     if (user) {
@@ -272,8 +296,13 @@ const Debate = ({ sessionId }) => {
     // 現在のディベートメッセージの状態を取得
     const debateMessages = chatHistory.filter((item) => !item.isChat);
     const debateString = debateMessages
-      .map((item) => `${item.senderName} : ${item.text}\n`)
+      .map((item) => {
+        const positionText = item.isProponent ? "(賛成派)" : "(反対派)";
+        return `${item.senderName} ${positionText} : ${item.text}\n`;
+      })
       .join("");
+
+    console.log(debateString);
 
     let url = `http://localhost:8000/session/${sessionId}/eval`;
     try {
@@ -347,6 +376,7 @@ const Debate = ({ sessionId }) => {
           userData.imgUrl ||
           "https://firebasestorage.googleapis.com/v0/b/socrates-413218.appspot.com/o/util%2Fanonymous.png?alt=media&token=b433ffba-46b8-47cb-8699-6c2780814c34",
         isChat: false,
+        isProponent: isProponent,
         timestamp: serverTimestamp(),
       });
 
@@ -424,17 +454,36 @@ const Debate = ({ sessionId }) => {
                   <div>
                     {remainingTime > 0 && (
                       <>
-                        <h2 className="text-5xl font-semibold apply-font">
-                          Information
-                        </h2>
-                        <p className="text-xl font-bold flex items-center japanese-font">
-                          <i className="fas fa-characters mr-2"></i>残り文字数:{" "}
-                          {userRemainingCharacters}文字
-                        </p>
-                        <p className="text-xl font-bold flex items-center japanese-font">
-                          <i className="fas fa-hourglass-end mr-2"></i>残り時間:{" "}
-                          {formatTime(remainingTime)}
-                        </p>
+                        <div className="p-6">
+                          <h2 className="text-5xl font-semibold apply-font">
+                            Topic
+                          </h2>
+                          <p className="text-xl font-bold flex items-center japanese-font">
+                            {topic}
+                          </p>
+                        </div>
+                        <div className="p-6">
+                          <h2 className="text-5xl font-semibold apply-font">
+                            Position
+                          </h2>
+                          <p className="text-xl font-bold flex items-center japanese-font">
+                            あなたは {isProponent ? "賛成派" : "反対派"}{" "}
+                            の意見を述べてください。
+                          </p>
+                        </div>
+                        <div className="p-6">
+                          <h2 className="text-5xl font-semibold apply-font">
+                            Information
+                          </h2>
+                          <p className="text-xl font-bold flex items-center japanese-font">
+                            <i className="fas fa-characters mr-2"></i>
+                            残り文字数: {userRemainingCharacters}文字
+                          </p>
+                          <p className="text-xl font-bold flex items-center japanese-font">
+                            <i className="fas fa-hourglass-end mr-2"></i>
+                            残り時間: {formatTime(remainingTime)}
+                          </p>
+                        </div>
                       </>
                     )}
                     {remainingTime === 0 && (
