@@ -14,7 +14,7 @@ import { db } from "../../lib/firebase";
 const DebatePage = () => {
   const router = useRouter();
   const sessionId = router.query.session_id as string;
-  const [sessionState, setSessionState] = useState(null);
+  const [sessionState, setSessionState] = useState<any>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const DebatePage = () => {
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
-        const messages = [];
+        let messages: any = [];
         querySnapshot.forEach((doc) => {
           messages.push(doc.data());
         });
@@ -57,7 +57,7 @@ const DebatePage = () => {
   if (error) return <p>{error}</p>;
   if (!sessionState) return <p>Loading...</p>;
 
-  return <Debate sessionState={sessionState} sessionId={sessionId} />;
+  return <Debate sessionId={sessionId} />;
 };
 
 export default DebatePage;

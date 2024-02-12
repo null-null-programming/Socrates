@@ -12,17 +12,12 @@ const WaitingRoomsPage = () => {
   const router = useRouter();
   const { user } = useAuth();
 
-  if (!user) {
-    alert("ログインしてください。");
-    router.push("/");
-    return;
-  }
-
   useEffect(() => {
+    if (!user) return;
     const fetchWaitingRooms = async () => {
       const waitingListRef = collection(db, "waiting_list");
       const snapshot = await getDocs(waitingListRef);
-      const rooms = [];
+      let rooms: any = []; // Explicitly define the type of the rooms array
       snapshot.forEach((doc) => {
         if (doc.data().userId !== user?.id) {
           rooms.push({ id: doc.id, ...doc.data() });
@@ -32,7 +27,7 @@ const WaitingRoomsPage = () => {
     };
 
     fetchWaitingRooms();
-  }, []);
+  }, [user]);
 
   const handleJoinRoom = async (roomId, topic) => {
     setIsLoading(true);
@@ -40,7 +35,7 @@ const WaitingRoomsPage = () => {
 
     try {
       console.log(roomId);
-      const result = await enqueueUserFc({ roomId: roomId, topic: topic });
+      const result: any = await enqueueUserFc({ roomId: roomId, topic: topic });
 
       console.log(result.data);
 
@@ -58,7 +53,7 @@ const WaitingRoomsPage = () => {
       <div className="space-y-4 mx-auto max-w-6xl pt-8 px-4 py-0 min-h-screen text-outline">
         <h2 className="text-2xl font-semibold mb-4 my-9">ルーム一覧</h2>
         {waitingRooms.length > 0 ? (
-          waitingRooms.map((room) => (
+          waitingRooms.map((room: any) => (
             <button
               key={room.id}
               className="bg-gray-900 p-4 rounded-lg shadow w-full text-left"

@@ -24,7 +24,9 @@ interface ChatItem {
   text: string;
   senderId: string;
   senderName: string;
+  senderImgUrl: string;
   isChat: boolean;
+  isProponent: boolean;
   timestamp: any;
 }
 
@@ -57,7 +59,12 @@ const Debate = ({ sessionId }) => {
   const [chatMessage, setChatMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
   const [remainingTime, setRemainingTime] = useState(MAX_TIME);
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState({
+    user_name: "Anonymous",
+    imgUrl:
+      "https://firebasestorage.googleapis.com/v0/b/socrates-413218.appspot.com/o/util%2Fanonymous.png?alt=media&token=b433ffba-46b8-47cb-8699-6c2780814c34",
+    rate: 1500,
+  });
   const { user, token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [topic, setTopic] = useState(null);
@@ -65,14 +72,13 @@ const Debate = ({ sessionId }) => {
   const [userRemainingCharacters, setUserRemainingCharacters] =
     useState(MAX_CHARACTERS);
 
-  if (!user) return;
-
   const isProponent = useCheckMyPosition(sessionId, user?.id);
   const opponentUid = useFetchOpponentUid(sessionId, user?.id);
 
   const router = useRouter();
 
   useEffect(() => {
+    if (!user) return;
     const getTopicBySessionId = async () => {
       const sessionRef = doc(db, "sessions", sessionId);
 
@@ -91,14 +97,16 @@ const Debate = ({ sessionId }) => {
     };
 
     getTopicBySessionId();
-  }, [sessionId]);
+  }, [sessionId, user]);
 
   useEffect(() => {
     if (user) {
       // user.idが利用可能な場合のみfetchUserDataを呼び出す
       const fetchAndSetUserData = async () => {
         const fetchedUserData = await fetchUserData(user.id);
-        setUserData(fetchedUserData);
+        if (fetchedUserData) {
+          setUserData(fetchedUserData);
+        }
       };
 
       fetchAndSetUserData();
@@ -122,6 +130,7 @@ const Debate = ({ sessionId }) => {
   };
 
   useEffect(() => {
+    if (!user) return;
     // セッションのドキュメントからstartTimeを取得
     const getSessionStartTime = async () => {
       const sessionRef = doc(db, "sessions", sessionId);
@@ -147,9 +156,10 @@ const Debate = ({ sessionId }) => {
     };
 
     getSessionStartTime();
-  }, [sessionId]);
+  }, [sessionId, user]);
 
   useEffect(() => {
+    if (!user) return;
     // chatHistoryの最後のメッセージを確認
     const lastMessage = chatHistory[chatHistory.length - 1];
 
@@ -158,12 +168,13 @@ const Debate = ({ sessionId }) => {
     if (lastMessage && lastMessage.senderName === "system") {
       setIsLoading(false);
     }
-  }, [chatHistory]);
+  }, [chatHistory, user]);
 
   // chatHistory または debateMessage が変更されるたびに、文字数と時間を更新
   useEffect(() => {
+    if (!user) return;
     updateRemainingCharacters();
-  }, [chatHistory, debateMessage]);
+  }, [chatHistory, debateMessage, user]);
 
   useEffect(() => {
     let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
@@ -221,6 +232,7 @@ const Debate = ({ sessionId }) => {
   }, [user, userData, sessionId]);
 
   useEffect(() => {
+    if (!user) return;
     const timer = setInterval(() => {
       setRemainingTime((prevTime) => {
         if (prevTime > 0) {
@@ -233,7 +245,7 @@ const Debate = ({ sessionId }) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [user]);
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
@@ -243,6 +255,7 @@ const Debate = ({ sessionId }) => {
 
   // メッセージ読み込みの useEffect はそのままに保持
   useEffect(() => {
+    if (!user) return;
     const messagesRef = collection(db, "sessions", sessionId, "debate");
     const q = query(messagesRef, orderBy("timestamp"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -254,33 +267,35 @@ const Debate = ({ sessionId }) => {
     });
 
     return () => unsubscribe();
-  }, [sessionId]);
+  }, [sessionId, user]);
 
   const analyzeAndSaveEvaluationResult = async (json) => {
     const data = json["result"];
 
-    const EvalHistory = [];
+    let EvalHistory: any = [];
     let text = "";
     for (const [userName, scores] of Object.entries(data)) {
       if (userName === "round") continue;
       text += `UserName: ${userName}\n\n`;
-      for (const [category, details] of Object.entries(scores)) {
-        if (category === "得点") {
-          text += `${category}\n合計 ${details["合計"]}\n`;
-        } else {
-          text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
+      if (scores) {
+        for (const [category, details] of Object.entries(scores)) {
+          if (category === "得点") {
+            text += `${category}\n合計 ${details["合計"]}\n`;
+          } else {
+            text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
+          }
         }
+        EvalHistory.push({
+          senderId: "system",
+          senderName: "system",
+          senderImgUrl: null,
+          isChat: true,
+          text: text,
+          isProponent: null,
+          timestamp: serverTimestamp(),
+        });
+        text = "";
       }
-
-      EvalHistory.push({
-        senderId: "system",
-        senderName: "system",
-        isChat: true,
-        text: text,
-        timestamp: serverTimestamp(),
-      });
-
-      text = "";
     }
 
     // Firestoreデータベースに結果を保存
@@ -333,6 +348,7 @@ const Debate = ({ sessionId }) => {
   };
 
   useEffect(() => {
+    if (!user) return;
     if (remainingTime === 0) {
       const lastDebateMessage = chatHistory
         .filter((item) => !item.isChat)
@@ -355,7 +371,7 @@ const Debate = ({ sessionId }) => {
         evaluateDebate();
       }
     }
-  }, [remainingTime]);
+  }, [remainingTime, user]);
 
   const sendMessage = async (isDebateMessage: boolean) => {
     // ログインチェック

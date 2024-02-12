@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 // 自分の立場（賛成か反対か）を確認するカスタムフック
 const useCheckMyPosition = (sessionId, myId) => {
-  const [isProponent, setIsProponent] = useState(null); // nullは未確定を意味する
+  const [isProponent, setIsProponent] = useState(true);
 
   useEffect(() => {
     const fetchSessionParticipants = async () => {

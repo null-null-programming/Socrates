@@ -92,11 +92,11 @@ const Create = () => {
       }
 
       const userData = await fetchUserData(userId);
-      const user_name = userData.user_name;
+      const user_name = userData?.user_name || "Anonymous";
 
       // Firebase Function の呼び出し
       const enqueueUserFc = httpsCallable(functions, "enqueueUser");
-      const result = await enqueueUserFc({
+      const result: any = await enqueueUserFc({
         topic: topic,
         userName: user_name,
       });

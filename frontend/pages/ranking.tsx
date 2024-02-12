@@ -10,8 +10,8 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 
 const Ranking = () => {
-  const [users, setUsers] = useState([]);
-  const [lastVisible, setLastVisible] = useState(null);
+  const [users, setUsers] = useState<any>([]);
+  const [lastVisible, setLastVisible] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   // ユーザーデータの初回取得

@@ -13,7 +13,7 @@ import { db } from "../lib/firebase";
 
 const Profile = () => {
   const [name, setName] = useState("");
-  const [imgFile, setImgFile] = useState(null);
+  const [imgFile, setImgFile] = useState<File | null>(null);
   const [imgUrl, setImgUrl] = useState(""); // 画像URLを表示するためのstate
   const { user } = useAuth();
   const router = useRouter();
@@ -90,7 +90,7 @@ const Profile = () => {
           <div className="">
             <input
               type="file"
-              onChange={(e) => setImgFile(e.target.files[0])}
+              onChange={(e) => e.target.files && setImgFile(e.target.files[0])}
               className="w-32 h-16  mx-auto  w-full text-white text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
             />
           </div>
