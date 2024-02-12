@@ -1,7 +1,4 @@
 // コンポーネントとフックのインポートはそのままに保持
-import Navbar from "@/components/Navbar";
-import { useAuth } from "@/context/auth";
-import { db } from "@/lib/firebase";
 import {
   addDoc,
   collection,
@@ -15,7 +12,10 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
+import { useAuth } from "../context/auth";
 import fetchUserData from "../lib/fetchUserInfo";
+import { db } from "../lib/firebase";
 import useCheckMyPosition from "./useCheckMyPosition";
 import useFetchOpponentUid from "./useFetchOpponentUid";
 
