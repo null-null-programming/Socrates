@@ -1,0 +1,6 @@
+fastapi
+pydantic
+firebase-admin
+uvicorn
+python-dotenv
+openai
