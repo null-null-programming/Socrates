@@ -11,7 +11,9 @@ function calculateEloRating(ra, rb, result, k = 32) {
     return Math.round(newRa);
 }
 
-exports.evaluateDebate = functions.https.onCall(async (data, context) => {
+exports.evaluateDebate = functions.runWith({
+    timeoutSeconds: 540,
+}).https.onCall(async (data, context) => {
     // 認証されているか確認
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');

@@ -24,7 +24,7 @@ class Completions:
         response = self.client.chat.completions.create(
             model=os.getenv("MODEL_NAME"),
             messages=send_debate,
-            # response_format={"type": "json_object"}, # gpt-4 only
+            response_format={"type": "json_object"},  # gpt-4 only
             temperature=0.0,
         )
 

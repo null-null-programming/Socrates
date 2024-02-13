@@ -32,7 +32,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 300; // 5min
+const MAX_TIME = 180; // 5min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -323,7 +323,9 @@ const Debate = ({ sessionId }) => {
       .join("");
 
     // Firebase FunctionsのhttpsCallableを使用して関数を呼び出す
-    const evaluateDebateFunction = httpsCallable(functions, "evaluateDebate");
+    const evaluateDebateFunction = httpsCallable(functions, "evaluateDebate", {
+      timeout: 550000,
+    });
 
     try {
       const { data } = await evaluateDebateFunction({
