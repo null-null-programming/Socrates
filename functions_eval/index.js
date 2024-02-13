@@ -17,7 +17,7 @@ exports.evaluateDebate = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
     }
 
-    const { debate, myDebaterName, opponentUid } = data;
+    const { debate, my_debater_name, opponent_uid } = data;
     const uid = context.auth.uid;
 
     let evalResult;
@@ -28,10 +28,26 @@ exports.evaluateDebate = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', 'Failed to evaluate debate.');
     }
 
+    console.log('debate:', debate);
+    console.log('UID:', uid);
+    console.log('Opponent UID:', opponent_uid);
+
+    if(!debate || typeof debate !== 'string' || !debate.trim()) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "debate".');
+    }
+
+    if (!uid || typeof uid !== 'string' || !uid.trim()) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "uid".');
+    }
+
+    if (!opponent_uid || typeof opponent_uid !== 'string' || !opponent_uid.trim()) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "opponent_uid".');
+    }
+
     // Firestoreから現在のレートを取得
     const db = admin.firestore();
     const userRef = db.collection('users').doc(uid);
-    const opponentRef = db.collection('users').doc(opponentUid);
+    const opponentRef = db.collection('users').doc(opponent_uid);
     const userDoc = await userRef.get();
     const opponentDoc = await opponentRef.get();
 
@@ -43,15 +59,19 @@ exports.evaluateDebate = functions.https.onCall(async (data, context) => {
     const userRate = userDoc.data().rate || 1500;
     const opponentRate = opponentDoc.data().rate || 1500;
 
-    const evalResultKeys = Object.keys(evalResult.eval);
-    const opponentDebaterName = evalResultKeys.find(name => name !== myDebaterName);
+    console.log("userRate:", userRate);
+    console.log("opponentRate:", opponentRate);
+    console.log("evalResult:", evalResult);
+
+    const evalResultKeys = Object.keys(evalResult);
+    const opponentDebaterName = evalResultKeys.find(name => name !== my_debater_name);
     
     if (!opponentDebaterName) {
         throw new functions.https.HttpsError('not-found', 'Opponent debater not found in the evaluation result.');
     }
     
-    const myScore = evalResult.eval[myDebaterName].得点.合計;
-    const opponentScore = evalResult.eval[opponentDebaterName].得点.合計;
+    const myScore = evalResult[my_debater_name].得点.合計;
+    const opponentScore = evalResult[opponentDebaterName].得点.合計;
 
     // 勝敗に基づいて新しいレートを計算
     const newUserRate = calculateEloRating(userRate, opponentRate, myScore > opponentScore ? 1 : 0);
@@ -62,7 +82,7 @@ exports.evaluateDebate = functions.https.onCall(async (data, context) => {
     await opponentRef.update({ rate: newOpponentRate });
 
     return {
-        message: "Evaluation and rate update successful",
+        result: evalResult,
         new_user_rate: newUserRate,
         new_opponent_rate: newOpponentRate,
     };

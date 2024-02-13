@@ -32,7 +32,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 30; // 5min
+const MAX_TIME = 300; // 5min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -76,6 +76,7 @@ const Debate = ({ sessionId }) => {
 
   const isProponent = useCheckMyPosition(sessionId, user?.id);
   const opponentUid = useFetchOpponentUid(sessionId, user?.id);
+  const [resultTriggered, setResultTriggered] = useState(false);
 
   const router = useRouter();
 
@@ -181,7 +182,7 @@ const Debate = ({ sessionId }) => {
   useEffect(() => {
     let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
 
-    if (user) {
+    if (user && resultTriggered) {
       const userDocRef = doc(db, "users", user.id);
       unsubscribe = onSnapshot(userDocRef, async (doc) => {
         if (doc.exists()) {
@@ -231,7 +232,7 @@ const Debate = ({ sessionId }) => {
     }
 
     return () => unsubscribe(); // コンポーネントのクリーンアップ時にリスナーを解除
-  }, [user, userData, sessionId]);
+  }, [user, userData, sessionId, resultTriggered]);
 
   useEffect(() => {
     if (!user) return;
@@ -350,9 +351,13 @@ const Debate = ({ sessionId }) => {
         .filter((item) => !item.isChat)
         .pop();
 
+      setResultTriggered(true);
+
       const hasEnded = chatHistory
         .filter((item) => item.isChat && item.senderName == "system")
         .pop();
+
+      console.log(hasEnded, "hasEnded");
 
       if (!lastDebateMessage) {
         router.push("/");
@@ -360,6 +365,7 @@ const Debate = ({ sessionId }) => {
       }
 
       if (hasEnded) {
+        setResultTriggered(false);
         return;
       }
 

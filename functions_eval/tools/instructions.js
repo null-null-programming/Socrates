@@ -49,7 +49,6 @@ const scoringInstructions = `
 回答の形式は以下の形式を守ってください。
 
 {
-  "eval": {
     "{first_debator_name}": {
       "スタンスの適切さ": {
         "得点": 1,
@@ -102,7 +101,6 @@ const scoringInstructions = `
         "理由": ""
       }
     }
-  }
 }
 `
 

@@ -17,20 +17,19 @@ class Completions {
   async getEvalResult(message) {
     const sendDebate = this.scoringInstructions.concat([{ role: "user", content: message }]);
     try {
-      const response = await this.client.createChatCompletion({
+      const response = await this.client.chat.completions.create({
         model: process.env.MODEL_NAME,
         messages: sendDebate,
         temperature: 0.0,
       });
 
-      const jsonResponse = response.data;
-      const gotMessage = jsonResponse.choices[0].message.content;
+      const gotMessage = response.choices[0].message.content;
 
       if (!gotMessage || typeof gotMessage !== 'string') {
         throw new TypeError("Received message is not a string");
       }
 
-      const evalResult = JSON.parse(gotMessage).eval;
+      const evalResult = JSON.parse(gotMessage);
 
       return evalResult;
     } catch (error) {
