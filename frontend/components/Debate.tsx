@@ -9,13 +9,14 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/auth";
 import fetchUserData from "../lib/fetchUserInfo";
-import { db } from "../lib/firebase";
+import { db, functions } from "../lib/firebase";
 import useCheckMyPosition from "./useCheckMyPosition";
 import useFetchOpponentUid from "./useFetchOpponentUid";
 
@@ -31,7 +32,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 300; // 5min
+const MAX_TIME = 30; // 5min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -206,8 +207,8 @@ const Debate = ({ sessionId }) => {
 
             // メッセージをsessionsのdebateコレクションに追加
             const messageItem = {
-              senderId: "system",
-              senderName: "system",
+              senderId: "result",
+              senderName: "result",
               isChat: true,
               text: rateChangeText,
               timestamp: serverTimestamp(),
@@ -312,7 +313,6 @@ const Debate = ({ sessionId }) => {
   );
 
   const evaluateDebate = useCallback(async () => {
-    // 現在のディベートメッセージの状態を取得
     const debateMessages = chatHistory.filter((item) => !item.isChat);
     const debateString = debateMessages
       .map((item) => {
@@ -321,40 +321,25 @@ const Debate = ({ sessionId }) => {
       })
       .join("");
 
-    console.log(debateString);
+    // Firebase FunctionsのhttpsCallableを使用して関数を呼び出す
+    const evaluateDebateFunction = httpsCallable(functions, "evaluateDebate");
 
-    let url = `http://localhost:8000/session/${sessionId}/eval`;
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          debate: debateString,
-          my_debater_name: userData.user_name,
-          opponent_uid: opponentUid,
-        }),
+      const { data } = await evaluateDebateFunction({
+        debate: debateString,
+        my_debater_name: userData.user_name,
+        opponent_uid: opponentUid,
       });
 
-      if (!res.ok) {
-        const error = await res.json();
-        alert(error.detail);
-        throw new Error("Failed to perform evaluation");
-      }
-
-      const json = await res.json();
-      analyzeAndSaveEvaluationResult(json);
+      analyzeAndSaveEvaluationResult(data);
     } catch (error) {
       console.error("Evaluation failed:", error);
+      alert("Failed to perform evaluation");
     }
   }, [
     analyzeAndSaveEvaluationResult,
     chatHistory,
     opponentUid,
-    sessionId,
-    token,
     userData.user_name,
   ]);
 
@@ -365,7 +350,9 @@ const Debate = ({ sessionId }) => {
         .filter((item) => !item.isChat)
         .pop();
 
-      const hasEnded = chatHistory.filter((item) => item.isChat).pop();
+      const hasEnded = chatHistory
+        .filter((item) => item.isChat && item.senderName == "system")
+        .pop();
 
       if (!lastDebateMessage) {
         router.push("/");

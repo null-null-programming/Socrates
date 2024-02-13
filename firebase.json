@@ -1,8 +1,8 @@
 {
   "functions": [
     {
-      "source": "functions_node",
-      "codebase": "default",
+      "source": "functions_matching",
+      "codebase": "functions_matching",
       "ignore": [
         "node_modules",
         ".git",
@@ -11,10 +11,10 @@
       ]
     },
     {
-      "source": "functions_python",
-      "codebase": "functions_python",
+      "source": "functions_eval",
+      "codebase": "functions_eval",
       "ignore": [
-        "venv",
+        "node_modules",
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log"
