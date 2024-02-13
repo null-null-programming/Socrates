@@ -431,6 +431,13 @@ const Debate = ({ sessionId }) => {
     </div>
   );
 
+  const handleKeyDown = (e) => {
+    if (e.ctrlKey && e.key === "Enter") {
+      e.preventDefault(); // デフォルトのイベントを防止
+      sendMessage(true);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen text-white p-1">
       <Navbar />
@@ -556,6 +563,7 @@ const Debate = ({ sessionId }) => {
                     setDebateMessage(input);
                   }
                 }}
+                onKeyDown={handleKeyDown}
               ></textarea>
               <button
                 className="mt-4 px-6 py-3 border border-[#08D9D6] text-white font-bold rounded-lg shadow-lg hover:bg-[#08D9D6] transition duration-300 ease-in-out"
