@@ -32,7 +32,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 180; // 5min
+const MAX_TIME = 60; // 5min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -380,9 +380,13 @@ const Debate = ({ sessionId }) => {
   }, [remainingTime, user, chatHistory, evaluateDebate, router]);
 
   const sendMessage = async (isDebateMessage: boolean) => {
-    // ログインチェック
     if (!user) {
       alert("ログインしてください。");
+      return;
+    }
+
+    if (userRemainingCharacters <= 0) {
+      alert("文字数が制限を超えたので送信できません。");
       return;
     }
 
@@ -544,7 +548,14 @@ const Debate = ({ sessionId }) => {
                 style={{ height: `${window.innerHeight / 7}px` }}
                 placeholder="Your debate message"
                 value={debateMessage}
-                onChange={(e) => setDebateMessage(e.target.value)}
+                onChange={(e) => {
+                  const input = e.target.value;
+                  if (input.length > userRemainingCharacters) {
+                    setDebateMessage(input.slice(0, userRemainingCharacters));
+                  } else {
+                    setDebateMessage(input);
+                  }
+                }}
               ></textarea>
               <button
                 className="mt-4 px-6 py-3 border border-[#08D9D6] text-white font-bold rounded-lg shadow-lg hover:bg-[#08D9D6] transition duration-300 ease-in-out"
