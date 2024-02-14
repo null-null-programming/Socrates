@@ -74,7 +74,7 @@ const Ranking = () => {
               />
 
               <p className="px-2 py-9">
-                {index + 1}. {user.name} - Rate: {user.rate}
+                {index + 1}. {user.user_name} - Rate: {user.rate}
               </p>
             </div>
           ))}

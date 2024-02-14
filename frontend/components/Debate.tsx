@@ -12,7 +12,8 @@ import {
 import { httpsCallable } from "firebase/functions";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/auth";
 import fetchUserData from "../lib/fetchUserInfo";
@@ -32,7 +33,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 300; // 5min
+const MAX_TIME = 30; // 5min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -61,6 +62,7 @@ const Debate = ({ sessionId }) => {
   const [chatMessage, setChatMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
   const [remainingTime, setRemainingTime] = useState(MAX_TIME);
+  const messagesEndRef = useRef(null);
   const [userData, setUserData] = useState({
     user_name: "Anonymous",
     imgUrl:
@@ -77,8 +79,17 @@ const Debate = ({ sessionId }) => {
   const isProponent = useCheckMyPosition(sessionId, user?.id);
   const opponentUid = useFetchOpponentUid(sessionId, user?.id);
   const [resultTriggered, setResultTriggered] = useState(false);
+  const [firstEval, setFirstEval] = useState(true);
 
   const router = useRouter();
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom(); // chatHistory が更新されるたびに最下部にスクロール
+  }, [chatHistory]); // chatHistory を依存配列に追加
 
   useEffect(() => {
     if (!user) return;
@@ -264,7 +275,7 @@ const Debate = ({ sessionId }) => {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const updatedMessages: ChatItem[] = [];
       querySnapshot.forEach((doc) => {
-        updatedMessages.push({ id: doc.id, ...doc.data() } as ChatItem);
+        updatedMessages.push({ ...doc.data() } as ChatItem);
       });
       setChatHistory(updatedMessages);
     });
@@ -290,6 +301,7 @@ const Debate = ({ sessionId }) => {
             }
           }
           EvalHistory.push({
+            id: uuidv4(),
             senderId: "system",
             senderName: "system",
             senderImgUrl: null,
@@ -302,11 +314,10 @@ const Debate = ({ sessionId }) => {
         }
       }
 
-      // Firestoreデータベースに結果を保存
-      const promises = EvalHistory.map((item) =>
-        addDoc(collection(db, "sessions", sessionId, "debate"), item)
+      EvalHistory.map(
+        async (item) =>
+          await addDoc(collection(db, "sessions", sessionId, "debate"), item)
       );
-      await Promise.all(promises);
 
       //debateMessage.push({ senderName: "system", text: text });
     },
@@ -338,6 +349,8 @@ const Debate = ({ sessionId }) => {
     } catch (error) {
       console.error("Evaluation failed:", error);
       alert("Failed to perform evaluation");
+    } finally {
+      setResultTriggered(false);
     }
   }, [
     analyzeAndSaveEvaluationResult,
@@ -353,8 +366,6 @@ const Debate = ({ sessionId }) => {
         .filter((item) => !item.isChat)
         .pop();
 
-      setResultTriggered(true);
-
       const hasEnded = chatHistory
         .filter((item) => item.isChat && item.senderName == "system")
         .pop();
@@ -367,17 +378,31 @@ const Debate = ({ sessionId }) => {
       }
 
       if (hasEnded) {
-        setResultTriggered(false);
         return;
+      }
+
+      const check = chatHistory.filter(
+        (item) => item.isChat && item.senderName == "result"
+      );
+
+      if (check.length >= 2) {
+        setResultTriggered(false);
+      } else {
+        setResultTriggered(true);
       }
 
       setIsLoading(true);
 
-      if (lastDebateMessage && lastDebateMessage.senderId === user?.id) {
+      if (
+        lastDebateMessage &&
+        lastDebateMessage.senderId === user?.id &&
+        firstEval
+      ) {
         evaluateDebate();
+        setFirstEval(false);
       }
     }
-  }, [remainingTime, user, chatHistory, evaluateDebate, router]);
+  }, [remainingTime, user, chatHistory, evaluateDebate, router, firstEval]);
 
   const sendMessage = async (isDebateMessage: boolean) => {
     if (!user) {
@@ -395,6 +420,7 @@ const Debate = ({ sessionId }) => {
       if (!message.trim()) return; // 空のメッセージは送信しない
 
       await addDoc(collection(db, "sessions", sessionId, "debate"), {
+        id: uuidv4(),
         text: message,
         senderId: user.id,
         senderName: userData.user_name || "Anonymous",
@@ -489,6 +515,7 @@ const Debate = ({ sessionId }) => {
                         </pre>
                       </div>
                     ))}
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
             )}
