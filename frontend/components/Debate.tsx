@@ -33,7 +33,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 30; // 5min
+const MAX_TIME = 600; // 10min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -287,19 +287,37 @@ const Debate = ({ sessionId }) => {
     async (json) => {
       const data = json["result"];
 
+      const weight_dict = {
+        スタンスの適切さ: 3,
+        相手のロジックの破綻の指摘: 3,
+        トピックに対する新しい議論: 2,
+        柔軟性と適応性: 2,
+        論理的整合性: 1,
+        主張の簡潔さ: 1,
+      };
+
       let EvalHistory: any = [];
       let text = "";
       for (const [userName, scores] of Object.entries(data)) {
         if (userName === "round") continue;
         text += `UserName: ${userName}\n\n`;
         if (scores) {
+          let total = 0;
           for (const [category, details] of Object.entries(scores)) {
-            if (category === "得点") {
-              text += `${category}\n合計 ${details["合計"]}\n`;
-            } else {
-              text += `${category}\n得点 ${details["得点"]}\n該当箇所: ${details["該当箇所"]}\n\n`;
+            if (category !== "得点") {
+              total += details["得点"] * weight_dict[category];
             }
           }
+          text += `Total: ${total}/60 \n\n`;
+
+          for (const [category, details] of Object.entries(scores)) {
+            if (category !== "得点") {
+              text += `${category}\n得点  ${
+                details["得点"] * weight_dict[category]
+              }/${5 * weight_dict[category]} \n\n`;
+            }
+          }
+
           EvalHistory.push({
             id: uuidv4(),
             senderId: "system",
@@ -326,12 +344,15 @@ const Debate = ({ sessionId }) => {
 
   const evaluateDebate = useCallback(async () => {
     const debateMessages = chatHistory.filter((item) => !item.isChat);
-    const debateString = debateMessages
+    let debateString = "Topic : " + topic + "\n\nDebate : \n\n";
+    debateString += debateMessages
       .map((item) => {
         const positionText = item.isProponent ? "(賛成派)" : "(反対派)";
         return `${item.senderName} ${positionText} : ${item.text}\n`;
       })
       .join("");
+
+    console.log(debateString, "debateString");
 
     // Firebase FunctionsのhttpsCallableを使用して関数を呼び出す
     const evaluateDebateFunction = httpsCallable(functions, "evaluateDebate", {

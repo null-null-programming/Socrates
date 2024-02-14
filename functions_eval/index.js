@@ -71,9 +71,38 @@ exports.evaluateDebate = functions.runWith({
     if (!opponentDebaterName) {
         throw new functions.https.HttpsError('not-found', 'Opponent debater not found in the evaluation result.');
     }
+
+    /*
+    重み
+    スタンスの適切さ: ×3
+    相手のロジックの破綻の指摘: ×3
+    トピックに対する新しい議論: ×2
+    柔軟性と適応性: ×2
+    論理的整合性: ×1
+    主張の簡潔さ: ×1
+    */
     
-    const myScore = evalResult[my_debater_name].得点.合計;
-    const opponentScore = evalResult[opponentDebaterName].得点.合計;
+    const myScores = evalResult[my_debater_name];
+    let myScore = 0;
+    for (const key in myScores) {
+        if(key == "スタンスの適切さ") myScore += myScores[key].得点 * 3;
+        if(key == "相手のロジックの破綻の指摘") myScore += myScores[key].得点 * 3;
+        if(key == "トピックに対する新しい議論") myScore += myScores[key].得点 * 2;
+        if(key == "柔軟性と適応性") myScore += myScores[key].得点 * 2;
+        if(key == "論理的整合性") myScore += myScores[key].得点;
+        if(key == "主張の簡潔さ") myScore += myScores[key].得点;
+    }
+
+    const opponentScores = evalResult[opponentDebaterName];
+    let opponentScore = 0;
+    for (const key in opponentScores) {
+        if(key == "スタンスの適切さ") opponentScore += opponentScores[key].得点 * 3;
+        if(key == "相手のロジックの破綻の指摘") opponentScore += opponentScores[key].得点 * 3;
+        if(key == "トピックに対する新しい議論") opponentScore += opponentScores[key].得点 * 2;
+        if(key == "柔軟性と適応性") opponentScore += opponentScores[key].得点 * 2;
+        if(key == "論理的整合性") opponentScore += opponentScores[key].得点;
+        if(key == "主張の簡潔さ") opponentScore += opponentScores[key].得点;
+    }
 
     // 勝敗に基づいて新しいレートを計算
     const newUserRate = calculateEloRating(userRate, opponentRate, myScore > opponentScore ? 1 : 0);
