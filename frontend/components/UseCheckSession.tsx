@@ -45,8 +45,8 @@ const useCheckSession = (userId) => {
         router.asPath.includes(`/session/${sessionId}`) &&
         !url.includes(`/session/${sessionId}`)
       ) {
-        confirmingLeave.current = true; // 確認プロセスを開始
         const leaveSessionConfirmation = confirm("セッションから抜けますか？");
+        confirmingLeave.current = true; // 確認プロセスを開始
         if (leaveSessionConfirmation) {
           await leaveSession(userId, sessionId);
         } else {

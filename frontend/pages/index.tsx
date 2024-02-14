@@ -1,8 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 import Navbar from "../components/Navbar";
 
 const IndexPage = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+
+    if (hostname === "socrates-413218.web.app") {
+      router.push(pathname);
+    }
+  }, [router]);
   return (
     <div className="japanese-font">
       <div className="mx-auto max-w-6xl pt-8 px-4 py-0 min-h-screen text-outline">

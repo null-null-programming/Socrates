@@ -32,7 +32,7 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 60; // 5min
+const MAX_TIME = 300; // 5min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -452,6 +452,15 @@ const Debate = ({ sessionId }) => {
                 style={{ height: `${window.innerHeight / 2}px` }}
               >
                 <h2 className="text-5xl apply-font">Messages</h2>
+                {window.innerWidth < 768 && (
+                  <p className="text-xl font-bold flex items-center japanese-font">
+                    {topic}
+                    <br />
+                    <br />
+                    あなたは {isProponent ? "賛成派" : "反対派"}{" "}
+                    の意見を述べてください。
+                  </p>
+                )}
                 <div className="h-full">
                   {chatHistory
                     .filter((item) => !item.isChat)
