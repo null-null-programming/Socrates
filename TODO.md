@@ -7,6 +7,8 @@
 - root 以外で更新すると死ぬのを直す DONE
 - スマホだとポップアップウィンドウがでないから要修正 DONE
 - スマホでの Info と Debate の表示順を逆転させる DONE
+- 自動でメッセージが下に降りるように変更 DONE
+- Ranking にて表示名が Google アカウント名になるバグを修正 DONE
 - useState,useEffect をキチンと利用して DB の読み取り回数を減らす
 
 ## ADD
