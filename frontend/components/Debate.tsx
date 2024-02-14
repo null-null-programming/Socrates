@@ -62,7 +62,7 @@ const Debate = ({ sessionId }) => {
   const [chatMessage, setChatMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
   const [remainingTime, setRemainingTime] = useState(MAX_TIME);
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<any>(null);
   const [userData, setUserData] = useState({
     user_name: "Anonymous",
     imgUrl:
