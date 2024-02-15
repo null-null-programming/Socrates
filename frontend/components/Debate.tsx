@@ -363,11 +363,31 @@ const Debate = ({ sessionId }) => {
       主張の簡潔さ: "CC"（Concisenessの略）
       */
 
+      console.log(data, "data");
+
       let EvalHistory: any = [];
       let scoreArray: any = [];
       let text = "";
       for (const [userName, scores] of Object.entries(data)) {
         if (userName === "round") continue;
+
+        if (userName === "全体的な分析") {
+          let total_result = "総評 : \n\n";
+          total_result += scores;
+          const item = {
+            id: uuidv4(),
+            senderId: "system",
+            senderName: "system",
+            senderImgUrl: null,
+            isChat: true,
+            text: total_result,
+            isProponent: null,
+            timestamp: serverTimestamp(),
+          };
+
+          await addDoc(collection(db, "sessions", sessionId, "debate"), item);
+          continue;
+        }
 
         const param_dict = {
           userName: userName,
@@ -394,7 +414,10 @@ const Debate = ({ sessionId }) => {
             if (category !== "得点") {
               text += `${category}(${convert_dict[category]})\n得点  ${
                 details["得点"] * weight_dict[category]
-              }/${5 * weight_dict[category]} \n\n`;
+              }/${5 * weight_dict[category]} \n`;
+              text += "理由 : " + details["該当文章"] + "\n\n";
+            } else if (category === "得点") {
+              text += "全体的なコメント : \n" + details["理由"] + "\n\n";
             }
           }
 
