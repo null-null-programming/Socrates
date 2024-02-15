@@ -45,7 +45,7 @@ interface ScoreParam {
   CC: number;
 }
 
-const MAX_TIME = 30; // 10min
+const MAX_TIME = 600; // 10min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -213,7 +213,6 @@ const Debate = ({ sessionId }) => {
         id: doc.id,
         ...doc.data(),
       }));
-      console.log(updatedScores, "updatedScores");
       setScores(updatedScores);
     });
 
@@ -330,8 +329,6 @@ const Debate = ({ sessionId }) => {
 
     return () => unsubscribe();
   }, [sessionId, user]);
-
-  console.log(scores, "scores");
 
   const analyzeAndSaveEvaluationResult = useCallback(
     async (json) => {
