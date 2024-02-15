@@ -586,7 +586,7 @@ const Debate = ({ sessionId }) => {
                 <h2 className="text-5xl apply-font">Messages</h2>
                 {window.innerWidth < 768 && (
                   <p className="text-xl font-bold flex items-center japanese-font">
-                    {topic}
+                    Topic : {topic}
                     <br />
                     <br />
                     あなたは {isProponent ? "賛成派" : "反対派"}{" "}
@@ -630,7 +630,7 @@ const Debate = ({ sessionId }) => {
                 className="w-full md:w-1/2 overflow-auto"
                 style={{ height: `${window.innerHeight / 2}px` }}
               >
-                <div className=" text-white p-4 rounded-lg shadow-lg flex items-center justify-between">
+                <div className=" text-white p-4 rounded-lg shadow-lg  items-center justify-between">
                   {remainingTime > 0 && (
                     <>
                       <div className="p-6">
@@ -669,16 +669,20 @@ const Debate = ({ sessionId }) => {
                     <div>
                       <h1 className="text-5xl apply-font">RESULT</h1>
                       {
-                        <>
+                        <div className={window.innerWidth >= 768 ? "flex" : ""}>
                           {scores.map((user, index) => (
-                            <div key={index} className="p-3">
+                            <div
+                              key={index}
+                              className="p-3"
+                              style={{ width: "300px" }}
+                            >
                               <h1 className="text-xl p-2 font-bold flex items-center japanese-font">
                                 {user.userName}
                               </h1>
                               <RadarChart user={user} />
                             </div>
                           ))}
-                        </>
+                        </div>
                       }
                       {chatHistory
                         .filter((item) => item.isChat)

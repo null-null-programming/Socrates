@@ -32,7 +32,6 @@ const IndexPage = () => {
           <br />
           1対1のディベートバトルアプリ
         </p>
-
         <div className="text-center p-8">
           <Link href="/create">
             <b className=" apply-font  text-3xl border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors">

@@ -135,7 +135,7 @@ const Create = () => {
             style={{ maxWidth: "800px" }}
           >
             <li>討論するお題を入力してください。</li>
-            <li>お題の文字数は300文字までです。</li>
+            <li>お題の文字数は100文字までです。</li>
             <li>
               お題は賛成か反対かのどちらかで分けられる問いにしてください。
             </li>
@@ -144,7 +144,7 @@ const Create = () => {
             <div>
               <textarea
                 value={topic}
-                maxLength={300}
+                maxLength={100}
                 style={{ height: textareaHeight }}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="死刑制度に賛成か、反対か？"
