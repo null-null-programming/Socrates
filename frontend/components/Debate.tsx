@@ -13,10 +13,12 @@ import {
 import { httpsCallable } from "firebase/functions";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Navbar from "../components/Navbar";
 import RadarChart from "../components/RadarChart";
+import { Tweet } from "../components/Tweet";
 import { useAuth } from "../context/auth";
 import fetchUserData from "../lib/fetchUserInfo";
 import { db, functions } from "../lib/firebase";
@@ -701,6 +703,7 @@ const Debate = ({ sessionId }) => {
           </div>
         </div>
       </div>
+
       <div className="fixed bottom-0 w-full">
         <div className="flex flex-wrap">
           {/* ディベートメッセージ入力エリア */}
@@ -731,7 +734,20 @@ const Debate = ({ sessionId }) => {
           )}
           {/* チャットメッセージ入力エリア */}
           {(activeTab === "chat" || window.innerWidth >= 768) && (
-            <div className="w-full md:w-1/2 p-3"></div>
+            <div className="w-full md:w-1/2 flex justify-center">
+              <div
+                style={{
+                  width: `${window.innerWidth}px`,
+                  height: `${window.innerHeight / 4}px`,
+                }}
+              >
+                <Tweet id="1758079879202160712" />
+                <Script
+                  src="https://platform.twitter.com/widgets.js"
+                  strategy="lazyOnload"
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>
