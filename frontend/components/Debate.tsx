@@ -7,6 +7,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
@@ -633,68 +634,66 @@ const Debate = ({ sessionId }) => {
                 style={{ height: `${window.innerHeight / 2}px` }}
               >
                 <div className=" text-white p-4 rounded-lg shadow-lg flex items-center justify-between">
-                  <div>
-                    {remainingTime > 0 && (
-                      <>
-                        <div className="p-6">
-                          <h2 className="text-5xl font-semibold apply-font">
-                            Topic
-                          </h2>
-                          <p className="text-xl font-bold flex items-center japanese-font">
-                            {topic}
-                          </p>
-                        </div>
-                        <div className="p-6">
-                          <h2 className="text-5xl font-semibold apply-font">
-                            Position
-                          </h2>
-                          <p className="text-xl font-bold flex items-center japanese-font">
-                            あなたは {isProponent ? "賛成派" : "反対派"}{" "}
-                            の意見を述べてください。
-                          </p>
-                        </div>
-                        <div className="p-6">
-                          <h2 className="text-5xl font-semibold apply-font">
-                            Information
-                          </h2>
-                          <p className="text-xl font-bold flex items-center japanese-font">
-                            <i className="fas fa-characters mr-2"></i>
-                            残り文字数: {userRemainingCharacters}文字
-                          </p>
-                          <p className="text-xl font-bold flex items-center japanese-font">
-                            <i className="fas fa-hourglass-end mr-2"></i>
-                            残り時間: {formatTime(remainingTime)}
-                          </p>
-                        </div>
-                      </>
-                    )}
-                    {remainingTime === 0 && (
-                      <div>
-                        <h1 className="text-5xl apply-font">RESULT</h1>
-                        {
-                          <>
-                            {scores.map((user, index) => (
-                              <div key={index} className="p-3">
-                                <h1 className="text-xl p-2 font-bold flex items-center japanese-font">
-                                  {user.userName}
-                                </h1>
-                                <RadarChart user={user} />
-                              </div>
-                            ))}
-                          </>
-                        }
-                        {chatHistory
-                          .filter((item) => item.isChat)
-                          .map((item) => (
-                            <div key={item.id} className="p-2">
-                              <pre className="p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825] border border-[#EBF400]">
-                                {item.text}
-                              </pre>
+                  {remainingTime > 0 && (
+                    <>
+                      <div className="p-6">
+                        <h2 className="text-5xl font-semibold apply-font">
+                          Topic
+                        </h2>
+                        <p className="text-xl font-bold flex items-center japanese-font">
+                          {topic}
+                        </p>
+                      </div>
+                      <div className="p-6">
+                        <h2 className="text-5xl font-semibold apply-font">
+                          Position
+                        </h2>
+                        <p className="text-xl font-bold flex items-center japanese-font">
+                          あなたは {isProponent ? "賛成派" : "反対派"}{" "}
+                          の意見を述べてください。
+                        </p>
+                      </div>
+                      <div className="p-6">
+                        <h2 className="text-5xl font-semibold apply-font">
+                          Information
+                        </h2>
+                        <p className="text-xl font-bold flex items-center japanese-font">
+                          <i className="fas fa-characters mr-2"></i>
+                          残り文字数: {userRemainingCharacters}文字
+                        </p>
+                        <p className="text-xl font-bold flex items-center japanese-font">
+                          <i className="fas fa-hourglass-end mr-2"></i>
+                          残り時間: {formatTime(remainingTime)}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  {remainingTime === 0 && (
+                    <div>
+                      <h1 className="text-5xl apply-font">RESULT</h1>
+                      {
+                        <>
+                          {scores.map((user, index) => (
+                            <div key={index} className="p-3">
+                              <h1 className="text-xl p-2 font-bold flex items-center japanese-font">
+                                {user.userName}
+                              </h1>
+                              <RadarChart user={user} />
                             </div>
                           ))}
-                      </div>
-                    )}
-                  </div>
+                        </>
+                      }
+                      {chatHistory
+                        .filter((item) => item.isChat)
+                        .map((item) => (
+                          <div key={item.id} className="p-2">
+                            <pre className="p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825] border border-[#EBF400]">
+                              {item.text}
+                            </pre>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
