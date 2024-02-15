@@ -15,6 +15,7 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Navbar from "../components/Navbar";
+import RadarChart from "../components/RadarChart";
 import { useAuth } from "../context/auth";
 import fetchUserData from "../lib/fetchUserInfo";
 import { db, functions } from "../lib/firebase";
@@ -33,7 +34,17 @@ interface ChatItem {
   timestamp: any;
 }
 
-const MAX_TIME = 600; // 10min
+interface ScoreParam {
+  userName: string;
+  ST: number;
+  LA: number;
+  NA: number;
+  FX: number;
+  LD: number;
+  CC: number;
+}
+
+const MAX_TIME = 30; // 10min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -61,6 +72,7 @@ const Debate = ({ sessionId }) => {
   const [debateMessage, setDebateMessage] = useState<string>("");
   const [chatMessage, setChatMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
+  const [scores, setScores] = useState<ScoreParam[]>([]);
   const [remainingTime, setRemainingTime] = useState(MAX_TIME);
   const messagesEndRef = useRef<any>(null);
   const [userData, setUserData] = useState({
@@ -191,6 +203,39 @@ const Debate = ({ sessionId }) => {
   }, [chatHistory, debateMessage, user, updateRemainingCharacters]);
 
   useEffect(() => {
+    if (scores.length >= 2) return;
+
+    let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
+    const scoreCollectionRef = collection(db, "sessions", sessionId, "score");
+    unsubscribe = onSnapshot(scoreCollectionRef, (snapshot) => {
+      const updatedScores: any = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      console.log(updatedScores, "updatedScores");
+      setScores(updatedScores);
+    });
+
+    return () => unsubscribe(); // コンポーネントのクリーンアップ時にリスナーを解除
+  }, [sessionId, resultTriggered, scores]);
+
+  const leaveSession = async (userId, sessionId) => {
+    const userRef = doc(db, "users", userId);
+    const sessionRef = doc(db, "sessions", sessionId);
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        transaction.update(userRef, { sessionId: null });
+        transaction.update(sessionRef, { isActive: false });
+      });
+
+      console.log("セッションから正常に抜けました。");
+    } catch (error) {
+      console.error("セッションから抜ける際にエラーが発生しました:", error);
+    }
+  };
+
+  useEffect(() => {
     let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
 
     if (user && resultTriggered) {
@@ -238,6 +283,8 @@ const Debate = ({ sessionId }) => {
               );
             }
           }
+
+          await leaveSession(user.id, sessionId);
         }
       });
     }
@@ -283,6 +330,8 @@ const Debate = ({ sessionId }) => {
     return () => unsubscribe();
   }, [sessionId, user]);
 
+  console.log(scores, "scores");
+
   const analyzeAndSaveEvaluationResult = useCallback(
     async (json) => {
       const data = json["result"];
@@ -296,27 +345,60 @@ const Debate = ({ sessionId }) => {
         主張の簡潔さ: 1,
       };
 
+      const convert_dict = {
+        スタンスの適切さ: "ST",
+        相手のロジックの破綻の指摘: "LA",
+        トピックに対する新しい議論: "NA",
+        柔軟性と適応性: "FX",
+        論理的整合性: "LD",
+        主張の簡潔さ: "CC",
+      };
+
+      /*
+      スタンスの適切さ: "ST" (Stanceの略)
+      相手のロジックの破綻の指摘: "LA"（Logic Attackの略）
+      トピックに対する新しい議論: "NA"（New Argumentの略）
+      柔軟性と適応性: "FX"（Flexibilityの略）
+      論理的整合性: "LD"（Logic Defenceの略）
+      主張の簡潔さ: "CC"（Concisenessの略）
+      */
+
       let EvalHistory: any = [];
+      let scoreArray: any = [];
       let text = "";
       for (const [userName, scores] of Object.entries(data)) {
         if (userName === "round") continue;
+
+        const param_dict = {
+          userName: userName,
+          ST: 0,
+          LA: 0,
+          NA: 0,
+          FX: 0,
+          LD: 0,
+          CC: 0,
+        };
+
         text += `UserName: ${userName}\n\n`;
         if (scores) {
           let total = 0;
           for (const [category, details] of Object.entries(scores)) {
             if (category !== "得点") {
               total += details["得点"] * weight_dict[category];
+              param_dict[convert_dict[category]] = details["得点"];
             }
           }
           text += `Total: ${total}/60 \n\n`;
 
           for (const [category, details] of Object.entries(scores)) {
             if (category !== "得点") {
-              text += `${category}\n得点  ${
+              text += `${category}(${convert_dict[category]})\n得点  ${
                 details["得点"] * weight_dict[category]
               }/${5 * weight_dict[category]} \n\n`;
             }
           }
+
+          scoreArray.push(param_dict);
 
           EvalHistory.push({
             id: uuidv4(),
@@ -331,6 +413,10 @@ const Debate = ({ sessionId }) => {
           text = "";
         }
       }
+
+      scoreArray.map(async (item) => {
+        await addDoc(collection(db, "sessions", sessionId, "score"), item);
+      });
 
       EvalHistory.map(
         async (item) =>
@@ -374,6 +460,7 @@ const Debate = ({ sessionId }) => {
       setResultTriggered(false);
     }
   }, [
+    topic,
     analyzeAndSaveEvaluationResult,
     chatHistory,
     opponentUid,
@@ -584,6 +671,18 @@ const Debate = ({ sessionId }) => {
                     {remainingTime === 0 && (
                       <div>
                         <h1 className="text-5xl apply-font">RESULT</h1>
+                        {
+                          <>
+                            {scores.map((user, index) => (
+                              <div key={index} className="p-3">
+                                <h1 className="text-xl p-2 font-bold flex items-center japanese-font">
+                                  {user.userName}
+                                </h1>
+                                <RadarChart user={user} />
+                              </div>
+                            ))}
+                          </>
+                        }
                         {chatHistory
                           .filter((item) => item.isChat)
                           .map((item) => (
