@@ -106,6 +106,8 @@ const Debate = ({ sessionId }) => {
     scrollToBottom(); // chatHistory が更新されるたびに最下部にスクロール
   }, [chatHistory]); // chatHistory を依存配列に追加
 
+  console.log(chatHistory, "chatHistory");
+
   useEffect(() => {
     if (!user) return;
     const getTopicBySessionId = async () => {
@@ -529,8 +531,8 @@ const Debate = ({ sessionId }) => {
         lastDebateMessage.senderId === user?.id &&
         firstEval
       ) {
-        evaluateDebate();
         setFirstEval(false);
+        evaluateDebate();
       }
     }
   }, [remainingTime, user, chatHistory, evaluateDebate, router, firstEval]);
@@ -714,6 +716,8 @@ const Debate = ({ sessionId }) => {
                         .map((item) => (
                           <div key={item.id} className="p-2">
                             <pre className="p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825] border border-[#EBF400]">
+                              {item.id}
+                              {"\n"}
                               {item.text}
                             </pre>
                           </div>
