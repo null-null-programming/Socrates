@@ -45,7 +45,7 @@ interface ScoreParam {
   CC: number;
 }
 
-const MAX_TIME = 600; // 10min
+const MAX_TIME = 30; // 10min
 const MAX_CHARACTERS = 500;
 
 const useDisableScroll = () => {
@@ -93,6 +93,7 @@ const Debate = ({ sessionId }) => {
   const opponentUid = useFetchOpponentUid(sessionId, user?.id);
   const [resultTriggered, setResultTriggered] = useState(false);
   const [firstEval, setFirstEval] = useState(true);
+  const [resultTriggered2, setResultTriggered2] = useState(false);
 
   const router = useRouter();
 
@@ -103,8 +104,6 @@ const Debate = ({ sessionId }) => {
   useEffect(() => {
     scrollToBottom(); // chatHistory が更新されるたびに最下部にスクロール
   }, [chatHistory]); // chatHistory を依存配列に追加
-
-  console.log(chatHistory, "chatHistory");
 
   useEffect(() => {
     if (!user) return;
@@ -206,8 +205,12 @@ const Debate = ({ sessionId }) => {
   }, [chatHistory, debateMessage, user, updateRemainingCharacters]);
 
   useEffect(() => {
-    if (scores.length >= 2) return;
-    if (!resultTriggered) return;
+    if (!resultTriggered2) return;
+
+    if (scores.length >= 2) {
+      setResultTriggered2(false);
+      return;
+    }
 
     let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
     const scoreCollectionRef = collection(db, "sessions", sessionId, "score");
@@ -220,7 +223,7 @@ const Debate = ({ sessionId }) => {
     });
 
     return () => unsubscribe(); // コンポーネントのクリーンアップ時にリスナーを解除
-  }, [sessionId, resultTriggered, scores]);
+  }, [sessionId, resultTriggered2, scores]);
 
   const leaveSession = async (userId, sessionId) => {
     const userRef = doc(db, "users", userId);
@@ -477,6 +480,7 @@ const Debate = ({ sessionId }) => {
       });
 
       analyzeAndSaveEvaluationResult(data);
+      setResultTriggered2(true);
     } catch (error) {
       console.error("Evaluation failed:", error);
       alert("Failed to perform evaluation");
@@ -694,29 +698,26 @@ const Debate = ({ sessionId }) => {
                   {remainingTime === 0 && (
                     <div>
                       <h1 className="text-5xl apply-font">RESULT</h1>
-                      {
-                        <div className={window.innerWidth >= 768 ? "flex" : ""}>
-                          {scores.map((user, index) => (
-                            <div
-                              key={index}
-                              className="p-3"
-                              style={{ width: "300px" }}
-                            >
-                              <h1 className="text-xl p-2 font-bold flex items-center japanese-font">
-                                {user.userName}
-                              </h1>
-                              <RadarChart user={user} />
-                            </div>
-                          ))}
-                        </div>
-                      }
+                      <div className={window.innerWidth >= 768 ? "flex" : ""}>
+                        {scores.map((user, index) => (
+                          <div
+                            key={index}
+                            className="p-3"
+                            style={{ width: "300px" }}
+                          >
+                            <h1 className="text-xl p-2 font-bold flex items-center japanese-font">
+                              {user.userName}
+                            </h1>
+                            <RadarChart user={user} />
+                          </div>
+                        ))}
+                      </div>
+
                       {chatHistory
                         .filter((item) => item.isChat)
                         .map((item) => (
                           <div key={item.id} className="p-2">
                             <pre className="p-2 rounded my-2 text-white whitespace-pre-wrap bg-[#191825] border border-[#EBF400]">
-                              {item.id}
-                              {"\n"}
                               {item.text}
                             </pre>
                           </div>
