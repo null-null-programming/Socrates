@@ -4,6 +4,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -204,25 +205,24 @@ const Debate = ({ sessionId }) => {
     updateRemainingCharacters();
   }, [chatHistory, debateMessage, user, updateRemainingCharacters]);
 
+  console.log(scores, "scores");
+
   useEffect(() => {
-    if (!resultTriggered2) return;
+    if (scores.length >= 2) return;
 
-    if (scores.length >= 2) {
-      setResultTriggered2(false);
-      return;
-    }
-
-    let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
     const scoreCollectionRef = collection(db, "sessions", sessionId, "score");
-    unsubscribe = onSnapshot(scoreCollectionRef, (snapshot) => {
-      const updatedScores: any = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setScores(updatedScores);
-    });
-
-    return () => unsubscribe(); // コンポーネントのクリーンアップ時にリスナーを解除
+    getDocs(scoreCollectionRef)
+      .then((snapshot) => {
+        const updatedScores: any = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        console.log(updatedScores, "updatedScores");
+        setScores(updatedScores); // 状態更新関数で取得したデータをセット
+      })
+      .catch((error) => {
+        console.error("Error getting documents: ", error);
+      });
   }, [sessionId, resultTriggered2, scores]);
 
   const leaveSession = async (userId, sessionId) => {
