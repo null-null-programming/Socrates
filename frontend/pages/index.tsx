@@ -31,11 +31,23 @@ const IndexPage = () => {
           Socratesは、AIを活用した
           <br />
           1対1のディベートバトルアプリ
+          <br />
+          このアプリは現在α版です。
+          <br />
+          <br />
+          ご意見・ご要望・バグ報告は
+          <br />
+          ぬるぬる(X:@__Null_Null_)まで
         </p>
         <div className="text-center p-8">
           <Link href="/create">
-            <b className=" apply-font  text-3xl border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors">
-              Start Debate
+            <b className=" japanese-font  text-xl border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors">
+              部屋を作る
+            </b>
+          </Link>
+          <Link href="/room">
+            <b className=" japanese-font  text-xl border border-[#F0E3E3] bg-[#191825] text-[#F0E3E3] font-bold py-2 px-4 rounded transition-colors">
+              部屋に入る
             </b>
           </Link>
           <h2 className="text-3xl font-bold mt-8 mb-4">ルール</h2>
@@ -45,6 +57,9 @@ const IndexPage = () => {
           >
             <li>トピックに基づいて討論</li>
             <li>より高いスコアのユーザーが勝利します。</li>
+            <li>発言の順番は自由</li>
+            <li>制限時間は１０分</li>
+            <li>各ユーザーの文字数制限は500文字</li>
           </ul>
         </div>
       </div>

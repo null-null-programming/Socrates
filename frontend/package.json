@@ -10,6 +10,7 @@
     "export": "next export"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^2.5.0",
     "chart.js": "^4.4.1",
     "firebase": "^10.8.0",
     "framer-motion": "^11.0.3",
