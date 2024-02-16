@@ -13,12 +13,10 @@ import {
 import { httpsCallable } from "firebase/functions";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Navbar from "../components/Navbar";
 import RadarChart from "../components/RadarChart";
-import { Tweet } from "../components/Tweet";
 import { useAuth } from "../context/auth";
 import fetchUserData from "../lib/fetchUserInfo";
 import { db, functions } from "../lib/firebase";
@@ -209,6 +207,7 @@ const Debate = ({ sessionId }) => {
 
   useEffect(() => {
     if (scores.length >= 2) return;
+    if (!resultTriggered) return;
 
     let unsubscribe = () => {}; // クリーンアップ関数用の変数を初期化
     const scoreCollectionRef = collection(db, "sessions", sessionId, "score");
@@ -768,11 +767,13 @@ const Debate = ({ sessionId }) => {
                   height: `${window.innerHeight / 4}px`,
                 }}
               >
+                {/* 
                 <Tweet id="1758079879202160712" />
                 <Script
                   src="https://platform.twitter.com/widgets.js"
                   strategy="lazyOnload"
                 />
+              */}
               </div>
             </div>
           )}
