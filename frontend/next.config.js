@@ -5,7 +5,7 @@ const path = require('path');
 
 
 const nextConfig = {
-    //output: 'export',
+    output: 'export',
     images: {
       domains: ['firebasestorage.googleapis.com'],
       unoptimized: true, 
